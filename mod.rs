@@ -6,19 +6,47 @@ pub mod input;
 pub mod rich_text;
 pub mod screen;
 
-use std::{
-    io::{self, Write},
-    slice::Chunks,
-};
+use std::io::{self, Write};
 
-use crossterm::{cursor, event, execute, queue, style::Print, terminal};
+use crossterm::{
+    cursor, event, execute, queue,
+    style::{ContentStyle, Print, SetStyle},
+    terminal,
+};
 
 use crate::engine::{
     draw::DrawCall,
-    fps_counter::FpsCounter,
+    fps_counter::{FpsCounter, update_fps_counter},
     fps_limiter::{FpsLimiter, limit_fps, wait_for_next_frame},
-    screen::{Screen, TerminalCell, compose_buffer, diff_buffers},
+    screen::{Screen, build_crossterm_content_style, compose_buffer, diff_buffers},
 };
+
+#[derive(Clone, Copy)]
+pub struct Pos {
+    x: i16,
+    y: i16,
+}
+
+impl Pos {
+    pub fn new(x: i16, y: i16) -> Self {
+        Self { x, y }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct Size {
+    width: i16,
+    height: i16,
+}
+
+impl Size {
+    pub fn new(w: i16, h: i16) -> Self {
+        Self {
+            width: w,
+            height: h,
+        }
+    }
+}
 
 pub struct Engine {
     pub delta_time: f32,
@@ -48,6 +76,7 @@ impl Engine {
         self
     }
 
+    /// A value of `0` will result in uncapped FPS.
     pub fn limit_fps(mut self, value: u32) -> Self {
         limit_fps(&mut self.fps_limiter, value);
         self
@@ -81,6 +110,7 @@ pub fn exit_cleanup(engine: &mut Engine) -> io::Result<()> {
 
 pub fn start_frame(engine: &mut Engine) {
     engine.delta_time = wait_for_next_frame(&mut engine.fps_limiter);
+    update_fps_counter(&mut engine.fps_counter, engine.delta_time);
 }
 
 pub fn end_frame(engine: &mut Engine) -> io::Result<()> {
@@ -97,13 +127,61 @@ pub fn end_frame(engine: &mut Engine) -> io::Result<()> {
         engine.screen.cols,
     );
 
-    // TODO: optimize this
+    // !! EXPERIMENTAL BATCHING !!
+    // TODO: Test this under actual load, as under no load it cuts FPS in half qq
+    // let mut batch_row: Option<u16> = None;
+    // let mut batch_style: Option<ContentStyle> = None;
+    // let mut batch_start_x: u16 = 0;
+    // let mut batch_chars: String = String::new();
+
+    // for (x, y, cell) in engine.screen.buffer_diffs.iter() {
+    //     let style: ContentStyle = build_crossterm_content_style(cell);
+
+    //     // (row || style) mismatch => queue batch with crossterm
+    //     if batch_row != Some(*y) || batch_style != Some(style) {
+    //         if !batch_chars.is_empty() {
+    //             queue!(
+    //                 engine.stdout,
+    //                 cursor::MoveTo(batch_start_x, batch_row.unwrap()),
+    //                 Print(&batch_chars)
+    //             )?;
+    //             batch_chars.clear();
+    //         }
+    //         batch_start_x = *x;
+    //         batch_row = Some(*y);
+    //         batch_style = Some(style);
+    //         queue!(engine.stdout, SetStyle(style))?;
+    //     }
+
+    //     batch_chars.push(cell.ch);
+    // }
+
+    // // Queue last batch
+    // if !batch_chars.is_empty() {
+    //     queue!(
+    //         engine.stdout,
+    //         cursor::MoveTo(batch_start_x, batch_row.unwrap()),
+    //         Print(&batch_chars)
+    //     )?;
+    // }
+
     for (x, y, cell) in engine.screen.buffer_diffs.iter() {
         let (x, y) = (*x, *y);
-        queue!(engine.stdout, cursor::MoveTo(x, y), Print(cell.ch))?;
+        let style: ContentStyle = build_crossterm_content_style(cell);
+        queue!(
+            engine.stdout,
+            cursor::MoveTo(x, y),
+            SetStyle(style),
+            Print(cell.ch)
+        )?;
     }
 
     engine.stdout.flush()?;
+    engine
+        .screen
+        .old_buffer
+        .0
+        .copy_from_slice(&engine.screen.current_buffer.0);
     engine.draw_queue.clear();
 
     Ok(())

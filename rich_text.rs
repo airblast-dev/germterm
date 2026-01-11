@@ -12,6 +12,7 @@ bitflags! {
     }
 }
 
+#[derive(Clone)]
 pub struct RichText {
     pub text: String,
     pub fg: Color,
