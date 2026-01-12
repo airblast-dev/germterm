@@ -75,6 +75,7 @@ pub fn compose_buffer(buffer: &mut ScreenBuffer, draw_queue: &[DrawCall], cols: 
             return ch;
         }
 
+        // old_ch == ' ' || fg.a() == 255
         if old_ch != ' ' && fg.a() < 255 {
             return old_ch;
         }
@@ -177,27 +178,80 @@ pub fn compose_buffer(buffer: &mut ScreenBuffer, draw_queue: &[DrawCall], cols: 
 
         for (x_offset, ch) in chars.take(remaining_cols).enumerate() {
             let cell_index: usize = row_start_index + x as usize + x_offset;
-            let buffer_cell: &mut TerminalCell = &mut buffer.0[cell_index];
-
-            let fg: Color = draw_call.rich_text.fg;
-            let bg: Color = draw_call.rich_text.bg;
-            let attributes: Attributes = draw_call.rich_text.attributes;
-
-            let new_buffer_cell: TerminalCell = TerminalCell {
-                ch: compose_ch(buffer_cell.ch, ch, fg, bg),
-                fg: compose_fg(buffer_cell.fg, fg, buffer_cell.bg, bg, buffer_cell.ch, ch),
-                bg: compose_bg(buffer_cell.bg, bg),
-                attributes: compose_attributes(
-                    buffer_cell.attributes,
-                    attributes,
-                    buffer_cell.ch,
-                    fg,
-                    bg,
-                ),
+            let old_cell: TerminalCell = buffer.0[cell_index];
+            let new_cell: TerminalCell = TerminalCell {
+                ch,
+                fg: draw_call.rich_text.fg,
+                bg: draw_call.rich_text.bg,
+                attributes: draw_call.rich_text.attributes,
             };
 
-            buffer.0[cell_index] = new_buffer_cell
+            buffer.0[cell_index] = compose_cell(old_cell, new_cell);
+
+            // let old_ch: char = buffer_cell.ch;
+            // let old_fg: Color = buffer_cell.fg;
+            // let old_bg: Color = buffer_cell.bg;
+            // let old_attrs: Attributes = buffer_cell.attributes;
+
+            // let new_fg: Color = draw_call.rich_text.fg;
+            // let new_bg: Color = draw_call.rich_text.bg;
+            // let new_attrs: Attributes = draw_call.rich_text.attributes;
+
+            // buffer.0[cell_index] = compose_cell();
+
+            // let new_buffer_cell: TerminalCell = TerminalCell {
+            //     ch: compose_ch(buffer_cell.ch, ch, fg, bg),
+            //     fg: compose_fg(buffer_cell.fg, fg, buffer_cell.bg, bg, buffer_cell.ch, ch),
+            //     bg: compose_bg(buffer_cell.bg, bg),
+            //     attributes: compose_attributes(
+            //         buffer_cell.attributes,
+            //         attributes,
+            //         buffer_cell.ch,
+            //         fg,
+            //         bg,
+            //     ),
+            // };
+
+            // buffer.0[cell_index] = new_buffer_cell
         }
+    }
+}
+
+#[inline]
+fn compose_cell(old: TerminalCell, new: TerminalCell) -> TerminalCell {
+    let old_ch_invisible: bool = old.ch == ' ' || old.fg.a() == 0;
+    let new_ch_invisible: bool = new.ch == ' ' || new.fg.a() == 0;
+    let new_bg_opaque: bool = new.bg.a() == 255;
+
+    let out_bg: Color = if new.bg.a() == 0 {
+        old.bg
+    // } else if old.bg.a() == 255 {
+    //     new.bgw
+    } else {
+        blend_over(old.bg, new.bg)
+    };
+
+    let (out_ch, out_attributes) = if new_bg_opaque || !new_ch_invisible {
+        (new.ch, new.attributes)
+    } else {
+        (old.ch, old.attributes)
+    };
+
+    let out_fg: Color = if new_ch_invisible {
+        // Can't blend old.fg with new.fg => Blend old.fg with new.bg instead
+        blend_over(old.fg, new.bg)
+    } else if old_ch_invisible {
+        // Can't blend old.fg with new.fg => Blend old.bg with new.fg instead
+        blend_over(old.bg, new.fg)
+    } else {
+        blend_over(old.fg, new.fg)
+    };
+
+    TerminalCell {
+        ch: out_ch,
+        fg: out_fg,
+        bg: out_bg,
+        attributes: out_attributes,
     }
 }
 
