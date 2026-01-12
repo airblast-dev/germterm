@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use bitflags::bitflags;
 
 use crate::engine::color::Color;
@@ -14,7 +16,7 @@ bitflags! {
 
 #[derive(Clone)]
 pub struct RichText {
-    pub text: String,
+    pub text: Arc<String>,
     pub fg: Color,
     pub bg: Color,
     pub attributes: Attributes,
@@ -23,7 +25,7 @@ pub struct RichText {
 impl RichText {
     pub fn new(text: impl Into<String>) -> Self {
         Self {
-            text: text.into(),
+            text: Arc::new(text.into()),
             fg: Color::WHITE,
             bg: Color::CLEAR,
             attributes: Attributes::empty(),

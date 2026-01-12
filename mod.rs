@@ -8,17 +8,13 @@ pub mod screen;
 
 use std::io::{self, Write};
 
-use crossterm::{
-    cursor, event, execute, queue,
-    style::{ContentStyle, Print, SetStyle},
-    terminal,
-};
+use crossterm::{cursor, event, execute, queue, style as ctstyle, terminal};
 
 use crate::engine::{
     draw::DrawCall,
     fps_counter::{FpsCounter, update_fps_counter},
     fps_limiter::{FpsLimiter, limit_fps, wait_for_next_frame},
-    screen::{Screen, build_crossterm_content_style, compose_buffer, diff_buffers},
+    screen::{Screen, TerminalCell, build_crossterm_content_style, compose_buffer, diff_buffers},
 };
 
 #[derive(Clone, Copy)]
@@ -29,6 +25,13 @@ pub struct Pos {
 
 impl Pos {
     pub fn new(x: i16, y: i16) -> Self {
+        Self { x, y }
+    }
+
+    /// Scales the `x` argument by 2 to compensate for typical terminal cell aspect ratios,
+    /// making drawn shapes appear closer to a square.
+    pub fn square(x: i16, y: i16) -> Self {
+        let x: i16 = x * 2;
         Self { x, y }
     }
 }
@@ -45,6 +48,13 @@ impl Size {
             width: w,
             height: h,
         }
+    }
+
+    /// Scales the `width` argument by 2 to compensate for typical terminal cell aspect ratios,
+    /// making drawn shapes appear closer to a square.
+    pub fn square(width: i16, height: i16) -> Self {
+        let width: i16 = width * 2;
+        Self { width, height }
     }
 }
 
@@ -121,58 +131,24 @@ pub fn end_frame(engine: &mut Engine) -> io::Result<()> {
         engine.screen.rows,
     );
     diff_buffers(
-        &mut engine.screen.buffer_diffs,
+        &mut engine.screen.diff_products,
         &engine.screen.current_buffer,
         &engine.screen.old_buffer,
         engine.screen.cols,
     );
 
-    // !! EXPERIMENTAL BATCHING !!
-    // TODO: Test this under actual load, as under no load it cuts FPS in half qq
-    // let mut batch_row: Option<u16> = None;
-    // let mut batch_style: Option<ContentStyle> = None;
-    // let mut batch_start_x: u16 = 0;
-    // let mut batch_chars: String = String::new();
+    for diff_product in engine.screen.diff_products.iter() {
+        let x: u16 = diff_product.x;
+        let y: u16 = diff_product.y;
+        let cell: &TerminalCell = &diff_product.cell;
 
-    // for (x, y, cell) in engine.screen.buffer_diffs.iter() {
-    //     let style: ContentStyle = build_crossterm_content_style(cell);
-
-    //     // (row || style) mismatch => queue batch with crossterm
-    //     if batch_row != Some(*y) || batch_style != Some(style) {
-    //         if !batch_chars.is_empty() {
-    //             queue!(
-    //                 engine.stdout,
-    //                 cursor::MoveTo(batch_start_x, batch_row.unwrap()),
-    //                 Print(&batch_chars)
-    //             )?;
-    //             batch_chars.clear();
-    //         }
-    //         batch_start_x = *x;
-    //         batch_row = Some(*y);
-    //         batch_style = Some(style);
-    //         queue!(engine.stdout, SetStyle(style))?;
-    //     }
-
-    //     batch_chars.push(cell.ch);
-    // }
-
-    // // Queue last batch
-    // if !batch_chars.is_empty() {
-    //     queue!(
-    //         engine.stdout,
-    //         cursor::MoveTo(batch_start_x, batch_row.unwrap()),
-    //         Print(&batch_chars)
-    //     )?;
-    // }
-
-    for (x, y, cell) in engine.screen.buffer_diffs.iter() {
-        let (x, y) = (*x, *y);
-        let style: ContentStyle = build_crossterm_content_style(cell);
+        let style: ctstyle::ContentStyle = build_crossterm_content_style(cell);
         queue!(
             engine.stdout,
             cursor::MoveTo(x, y),
-            SetStyle(style),
-            Print(cell.ch)
+            ctstyle::SetAttribute(ctstyle::Attribute::Reset),
+            ctstyle::SetStyle(style),
+            ctstyle::Print(cell.ch),
         )?;
     }
 

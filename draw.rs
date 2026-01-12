@@ -31,3 +31,9 @@ pub fn draw_fps_counter(engine: &mut Engine, pos: Pos) {
         format!("FPS: {:2.0}", engine.fps_counter.fps_ema),
     );
 }
+
+pub fn fill_screen(engine: &mut Engine, color: Color) {
+    let cols: i16 = engine.screen.cols as i16;
+    let rows: i16 = engine.screen.rows as i16;
+    draw_rect(engine, Pos::new(0, 0), Size::new(cols, rows), color);
+}
