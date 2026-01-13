@@ -6,11 +6,13 @@ pub mod input;
 pub mod rich_text;
 pub mod screen;
 
+pub use crossterm;
+
 use std::io::{self, Write};
 
 use crossterm::{cursor, event, execute, queue, style as ctstyle, terminal};
 
-use crate::engine::{
+use crate::{
     draw::DrawCall,
     fps_counter::{FpsCounter, update_fps_counter},
     fps_limiter::{FpsLimiter, limit_fps, wait_for_next_frame},
@@ -101,7 +103,7 @@ pub fn init(engine: &mut Engine) -> io::Result<()> {
         engine.stdout,
         terminal::EnterAlternateScreen,
         terminal::DisableLineWrap,
-        terminal::SetTitle("term-slots"),
+        terminal::SetTitle(engine.title),
         event::EnableMouseCapture,
         cursor::Hide,
         terminal::SetSize(engine.screen.cols, engine.screen.rows)

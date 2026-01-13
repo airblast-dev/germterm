@@ -62,8 +62,6 @@ pub fn wait_for_next_frame(fps_limiter: &mut FpsLimiter) -> f32 {
     delta_time
 }
 
-/// This function should never, receive a negative `target_fps`,
-/// as the module's public access for fps limit numbers uses u32.
 fn calc_target_frametime(target_fps: f32) -> Duration {
     let fps_is_uncapped: bool = target_fps == 0.0;
 
@@ -77,7 +75,7 @@ fn calc_target_frametime(target_fps: f32) -> Duration {
 fn calc_delta_time(next_frame_timestamp: Instant, target_frametime: Duration) -> f32 {
     let now = Instant::now();
     let prev_frame = if target_frametime == Duration::ZERO {
-        // uncapped FPS: measure delta since last timestamp
+        // Uncapped FPS => measure delta since last timestamp
         next_frame_timestamp
     } else {
         next_frame_timestamp

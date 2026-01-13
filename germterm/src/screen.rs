@@ -5,7 +5,7 @@ use crossterm::style::{
     ContentStyle as CrosstermContentStyle,
 };
 
-use crate::engine::{
+use crate::{
     color::{Color, blend_over},
     draw::DrawCall,
     rich_text::Attributes,

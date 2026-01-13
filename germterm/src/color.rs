@@ -14,10 +14,16 @@ pub struct Color(u32);
 
 impl Color {
     pub const WHITE: Self = Color(0xFF_FF_FF_FF);
+    pub const DARK_GRAY: Self = Color(0xA9_A9_A9_FF);
+    pub const LIGHT_GRAY: Self = Color(0xD3_D3_D3_FF);
     pub const BLACK: Self = Color(0x00_00_00_FF);
     pub const RED: Color = Color(0xFF_00_00_FF);
     pub const GREEN: Color = Color(0x00_FF_00_FF);
     pub const BLUE: Color = Color(0x00_00_FF_FF);
+    pub const YELLOW: Color = Color(0xFF_FF_00_FF);
+    pub const CYAN: Color = Color(0x00_FF_FF_FF);
+    pub const VIOLET: Color = Color(0x7F_00_FF_FF);
+    pub const TEAL: Color = Color(0x00_80_80_FF);
     pub const CLEAR: Color = Color(0x00_00_00_00);
 
     pub fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
@@ -46,6 +52,10 @@ impl Color {
 
     pub fn rgba(&self) -> (u8, u8, u8, u8) {
         (self.r(), self.g(), self.b(), self.a())
+    }
+
+    pub fn with_alpha(&self, a: u8) -> Self {
+        Color((self.0 & 0xFFFF_FF00) | a as u32)
     }
 
     pub fn rgba_f32(&self) -> (f32, f32, f32, f32) {

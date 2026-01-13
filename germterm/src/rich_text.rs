@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use bitflags::bitflags;
 
-use crate::engine::color::Color;
+use crate::color::Color;
 
 bitflags! {
     #[derive(Clone, Copy, PartialEq, Eq)]
