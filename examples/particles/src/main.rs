@@ -2,8 +2,10 @@ use germterm::{
     Engine, Pos,
     color::Color,
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind},
-    draw::{draw_braille_dot, draw_fps_counter, draw_text, fill_screen},
-    end_frame, exit_cleanup, init,
+    draw::{draw_braille_dot, draw_text, fill_screen},
+    end_frame, exit_cleanup,
+    fps_counter::draw_fps_counter,
+    init,
     input::poll_input,
     start_frame,
 };
@@ -12,8 +14,8 @@ use rand::Rng;
 
 use std::{f32::consts::PI, io};
 
-pub const TERM_COLS: u16 = 60;
-pub const TERM_ROWS: u16 = 30;
+pub const TERM_COLS: u16 = 100;
+pub const TERM_ROWS: u16 = 50;
 
 struct ParticleState {
     pos: (f32, f32),
@@ -44,12 +46,39 @@ fn main() -> io::Result<()> {
             }
 
             if let Event::Key(KeyEvent {
-                code: KeyCode::Char('w'),
+                code: KeyCode::Char('a'),
                 kind: KeyEventKind::Press,
                 ..
             }) = event
             {
-                spawn_particles(&mut particles_state);
+                spawn_particles(&mut particles_state, Color::BLUE, Color::VIOLET);
+            }
+
+            if let Event::Key(KeyEvent {
+                code: KeyCode::Char('s'),
+                kind: KeyEventKind::Press,
+                ..
+            }) = event
+            {
+                spawn_particles(&mut particles_state, Color::ORANGE, Color::YELLOW);
+            }
+
+            if let Event::Key(KeyEvent {
+                code: KeyCode::Char('d'),
+                kind: KeyEventKind::Press,
+                ..
+            }) = event
+            {
+                spawn_particles(&mut particles_state, Color::PINK, Color::CYAN);
+            }
+
+            if let Event::Key(KeyEvent {
+                code: KeyCode::Char('e'),
+                kind: KeyEventKind::Press,
+                ..
+            }) = event
+            {
+                spawn_particles(&mut particles_state, Color::PINK, Color::LIME);
             }
         }
 
@@ -87,23 +116,26 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
-fn spawn_particles(particles_state: &mut Vec<ParticleState>) {
+fn spawn_particles(particles_state: &mut Vec<ParticleState>, color_a: Color, color_b: Color) {
     let mut rng = rand::rng();
 
     let x = TERM_COLS as f32 / 2.0;
-    let y = TERM_ROWS as f32 / 3.5;
+    let y = TERM_ROWS as f32 / 3.0;
 
-    for _ in 0..1000 {
+    let max_speed: f32 = rng.random_range(4.0..16.0);
+    let jump_amount: f32 = rng.random_range(2.0..8.0);
+
+    for _ in 0..rng.random_range(100..1000) {
         let angle = rng.random_range(0.0..2.0 * PI);
-        let speed = rng.random_range(0.0..8.0);
+        let speed = rng.random_range(0.5..max_speed);
 
         let vx = speed * angle.cos();
-        let vy = (speed * angle.sin() - 8.0) * 0.5;
+        let vy = (speed * angle.sin() - jump_amount) * 0.5;
 
         let color = if rng.random_bool(0.5) {
-            Color::CYAN.with_alpha(70)
+            color_a.with_alpha(127)
         } else {
-            Color::VIOLET.with_alpha(70)
+            color_b.with_alpha(127)
         };
 
         // let color = Color::new(
