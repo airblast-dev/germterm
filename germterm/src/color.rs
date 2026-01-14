@@ -22,8 +22,11 @@ impl Color {
     pub const BLUE: Color = Color(0x00_00_FF_FF);
     pub const YELLOW: Color = Color(0xFF_FF_00_FF);
     pub const CYAN: Color = Color(0x00_FF_FF_FF);
-    pub const VIOLET: Color = Color(0x7F_00_FF_FF);
     pub const TEAL: Color = Color(0x00_80_80_FF);
+    pub const LIME: Color = Color(0x00_FF_00_FF);
+    pub const VIOLET: Color = Color(0x7F_00_FF_FF);
+    pub const PINK: Color = Color(0xFF_C0_CB_FF);
+    pub const ORANGE: Color = Color(0xFF_A5_00_FF);
     pub const CLEAR: Color = Color(0x00_00_00_00);
 
     pub fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
