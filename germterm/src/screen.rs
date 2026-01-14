@@ -128,7 +128,10 @@ fn compose_cell(old: TerminalCell, new: TerminalCell) -> TerminalCell {
         blend_over(old.bg, new.bg)
     };
 
-    let (out_ch, out_attributes) = if new_ch_invisible {
+    let (out_ch, out_attributes) = if new.bg.a() == 255 {
+        // Opaque new.bg drawn on top => Set char to new.ch
+        (new.ch, new.attributes)
+    } else if new_ch_invisible {
         // Invisible new.ch => Keep old.ch
         (old.ch, old.attributes)
     } else if old.ch != new.ch && is_braille(old.ch) && is_braille(new.ch) {

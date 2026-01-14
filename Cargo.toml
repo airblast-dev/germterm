@@ -4,4 +4,5 @@ members = [
     "germterm",
     "examples/blending-showcase",
     "examples/braille-merging",
+    "examples/particles",
 ]

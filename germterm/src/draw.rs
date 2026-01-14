@@ -17,7 +17,7 @@ pub fn draw_text(engine: &mut Engine, pos: Pos, text: impl Into<RichText>) {
 
 pub fn draw_rect(engine: &mut Engine, pos: Pos, size: Size, color: Color) {
     let row_text: String = " ".repeat(size.width as usize);
-    let row_rich_text: RichText = RichText::new(&row_text).fg(Color::CLEAR).bg(color);
+    let row_rich_text: RichText = RichText::new(&row_text).fg(Color::BLACK).bg(color);
 
     for row in 0..size.height {
         draw_text(engine, Pos::new(pos.x, pos.y + row), row_rich_text.clone())
