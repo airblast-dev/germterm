@@ -1,8 +1,8 @@
 use germterm::{
-    Engine,
     color::Color,
     crossterm::event::{Event, KeyCode, KeyEvent},
     draw::{draw_braille_dot, fill_screen},
+    engine::Engine,
     engine::{end_frame, exit_cleanup, init, start_frame},
     input::poll_input,
 };

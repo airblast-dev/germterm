@@ -76,7 +76,11 @@ pub fn start_frame(engine: &mut Engine) {
 
 pub fn end_frame(engine: &mut Engine) -> io::Result<()> {
     // Particles are always drawn on top due to engine limitations
-    update_and_draw_particles(&mut engine.particle_state, &mut engine.frame.draw_queue);
+    update_and_draw_particles(
+        &mut engine.particle_state,
+        &mut engine.frame.draw_queue,
+        engine.delta_time,
+    );
 
     compose_frame_buffer(
         &mut engine.frame.current_frame_buffer,

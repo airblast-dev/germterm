@@ -1,8 +1,8 @@
 use germterm::{
-    Engine,
     color::Color,
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind},
     draw::{Pos, draw_braille_dot, draw_text, fill_screen},
+    engine::Engine,
     engine::{end_frame, exit_cleanup, init, start_frame},
     fps_counter::draw_fps_counter,
     input::poll_input,

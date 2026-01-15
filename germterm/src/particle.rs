@@ -1,7 +1,7 @@
 use crate::{
-    Engine,
     color::Color,
     draw::internal::{self},
+    engine::Engine,
     frame::DrawCall,
 };
 
@@ -44,10 +44,26 @@ impl ParticleEmitter {
 pub(crate) fn update_and_draw_particles(
     particle_state: &mut [ParticleState],
     draw_calls: &mut Vec<DrawCall>,
+    delta_time: f32,
 ) {
+    let drag_factor: f32 = 20.0 * delta_time;
+    let gravity: f32 = 13.8;
+
     for state in particle_state.iter_mut() {
         let (x, y) = state.pos;
-        internal::draw_braille_dot(draw_calls, x, y, state.color);
+
+        let (mut velocity_x, mut velocity_y) = state.velocity;
+
+        velocity_x -= velocity_x * drag_factor.powi(2);
+        velocity_y -= velocity_y * drag_factor.powi(2);
+
+        velocity_y += gravity * delta_time;
+
+        let new_x: f32 = x + velocity_x * delta_time * 10.0;
+        let new_y: f32 = y + velocity_y * delta_time * 10.0;
+        state.pos = (new_x, new_y);
+
+        internal::draw_braille_dot(draw_calls, new_x, new_y, state.color);
     }
 }
 

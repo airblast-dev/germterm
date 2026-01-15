@@ -1,4 +1,4 @@
-use crate::{Engine, color::Color, rich_text::RichText};
+use crate::{color::Color, engine::Engine, rich_text::RichText};
 
 #[derive(Clone, Copy)]
 pub struct Pos {
@@ -61,7 +61,6 @@ pub fn draw_braille_dot(engine: &mut Engine, x: f32, y: f32, color: Color) {
 
 pub(crate) mod internal {
     use crate::{
-        Engine,
         color::Color,
         draw::{Pos, Size},
         frame::DrawCall,
