@@ -1,4 +1,7 @@
-use crate::{Engine, Pos, draw::draw_text};
+use crate::{
+    draw::{Pos, draw_text},
+    engine::Engine,
+};
 
 pub struct FpsCounter {
     pub fps_ema: f32,

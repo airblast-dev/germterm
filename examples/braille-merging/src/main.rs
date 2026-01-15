@@ -3,9 +3,8 @@ use germterm::{
     color::Color,
     crossterm::event::{Event, KeyCode, KeyEvent},
     draw::{draw_braille_dot, fill_screen},
-    end_frame, exit_cleanup, init,
+    engine::{end_frame, exit_cleanup, init, start_frame},
     input::poll_input,
-    start_frame,
 };
 
 use std::io;

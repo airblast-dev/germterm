@@ -1,12 +1,12 @@
 use germterm::{
-    Engine, Pos, Size,
+    Engine,
     color::Color,
     crossterm::event::{Event, KeyCode, KeyEvent},
-    draw::{draw_fps_counter, draw_rect, draw_text, fill_screen},
-    end_frame, exit_cleanup, init,
+    draw::{Pos, Size, draw_rect, draw_text, fill_screen},
+    engine::{end_frame, exit_cleanup, init, start_frame},
+    fps_counter::draw_fps_counter,
     input::poll_input,
     rich_text::{Attributes, RichText},
-    start_frame,
 };
 
 use std::io;
