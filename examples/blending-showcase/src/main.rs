@@ -108,12 +108,14 @@ fn main() -> io::Result<()> {
             &mut engine,
             Pos::square(13, 4),
             Size::square(2, 2),
-            Color::WHITE,
+            Color::RED,
         );
         draw_text(
             &mut engine,
             Pos::square(13, 4),
-            RichText::new("wxyz").fg(Color::VIOLET),
+            RichText::new("wxyz")
+                .fg(Color::YELLOW)
+                .attributes(Attributes::BOLD),
         );
         draw_rect(
             &mut engine,

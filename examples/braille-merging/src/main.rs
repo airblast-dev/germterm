@@ -1,7 +1,7 @@
 use germterm::{
     color::Color,
     crossterm::event::{Event, KeyCode, KeyEvent},
-    draw::{draw_braille_dot, fill_screen},
+    draw::{draw_octad, fill_screen},
     engine::Engine,
     engine::{end_frame, exit_cleanup, init, start_frame},
     input::poll_input,
@@ -36,9 +36,9 @@ fn main() -> io::Result<()> {
         fill_screen(&mut engine, Color::BLACK);
 
         // Those 3 should all merge into a single braille char in the cell
-        draw_braille_dot(&mut engine, 0.1, 0.0, Color::GREEN);
-        draw_braille_dot(&mut engine, 0.9, 0.0, Color::GREEN);
-        draw_braille_dot(&mut engine, 0.9, 0.9, Color::GREEN);
+        draw_octad(&mut engine, 0.1, 0.0, Color::GREEN);
+        draw_octad(&mut engine, 0.9, 0.0, Color::GREEN);
+        draw_octad(&mut engine, 0.9, 0.9, Color::GREEN);
 
         end_frame(&mut engine)?;
     }

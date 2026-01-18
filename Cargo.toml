@@ -5,4 +5,5 @@ members = [
     "examples/blending-showcase",
     "examples/braille-merging",
     "examples/particles",
+    "examples/twoxel-drawing",
 ]

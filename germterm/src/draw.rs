@@ -55,8 +55,12 @@ pub fn draw_rect(engine: &mut Engine, pos: Pos, size: Size, color: Color) {
     internal::draw_rect(&mut engine.frame.draw_queue, pos, size, color);
 }
 
-pub fn draw_braille_dot(engine: &mut Engine, x: f32, y: f32, color: Color) {
-    internal::draw_braille_dot(&mut engine.frame.draw_queue, x, y, color);
+pub fn draw_octad(engine: &mut Engine, x: f32, y: f32, color: Color) {
+    internal::draw_octad(&mut engine.frame.draw_queue, x, y, color);
+}
+
+pub fn draw_twoxel(engine: &mut Engine, x: f32, y: f32, color: Color) {
+    internal::draw_twoxel(&mut engine.frame.draw_queue, x, y, color);
 }
 
 pub(crate) mod internal {
@@ -64,7 +68,7 @@ pub(crate) mod internal {
         color::Color,
         draw::{Pos, Size},
         frame::DrawCall,
-        rich_text::RichText,
+        rich_text::{Attributes, RichText},
     };
 
     pub fn fill_screen(draw_queue: &mut Vec<DrawCall>, cols: i16, rows: i16, color: Color) {
@@ -93,7 +97,7 @@ pub(crate) mod internal {
         }
     }
 
-    pub fn draw_braille_dot(draw_queue: &mut Vec<DrawCall>, x: f32, y: f32, color: Color) {
+    pub fn draw_octad(draw_queue: &mut Vec<DrawCall>, x: f32, y: f32, color: Color) {
         let cell_x: i16 = x.floor() as i16;
         let cell_y: i16 = y.floor() as i16;
         let cell_pos: Pos = Pos::new(cell_x, cell_y);
@@ -111,12 +115,37 @@ pub(crate) mod internal {
             (1, 1) => 4,
             (1, 2) => 5,
             (1, 3) => 7,
-            _ => 0,
+            _ => panic!(
+                "Octad sub-position ({sub_x}, {sub_y}) falls out of expected ranges (0..1, 0..3)"
+            ),
         };
 
         let braille_char: char = std::char::from_u32(0x2800 + (1 << offset)).unwrap();
-        let rich_text: RichText = RichText::new(braille_char.to_string()).fg(color);
+        let rich_text: RichText = RichText::new(braille_char.to_string())
+            .fg(color)
+            .attributes(Attributes::OCTAD);
 
         draw_text(draw_queue, cell_pos, rich_text);
+    }
+
+    pub fn draw_twoxel(draw_queue: &mut Vec<DrawCall>, x: f32, y: f32, color: Color) {
+        let cell_x: i16 = x.floor() as i16;
+        let cell_y: i16 = y.floor() as i16;
+        let cell_pos: Pos = Pos::new(cell_x, cell_y);
+
+        let sub_y_float: f32 = (y - cell_y as f32) * 2.0;
+        let sub_y: usize = sub_y_float.floor().clamp(0.0, 1.0) as usize;
+
+        let half_block: char = match sub_y {
+            0 => '▀',
+            1 => '▄',
+            _ => panic!("Twoxel 'sub_y': {sub_y} falls out of the expected 0..1 range"),
+        };
+
+        let rich_text: RichText = RichText::new(half_block.to_string())
+            .fg(color)
+            .attributes(Attributes::TWOXEL);
+
+        draw_text(draw_queue, cell_pos, rich_text)
     }
 }
