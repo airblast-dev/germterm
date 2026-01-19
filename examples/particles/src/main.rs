@@ -1,5 +1,5 @@
 use germterm::{
-    color::{Color, ColorGradient, GradientStop},
+    color::{Color, ColorGradient, GradientStop, lerp},
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind},
     draw::{Pos, draw_octad, draw_text, fill_screen},
     engine::{Engine, end_frame, exit_cleanup, init, start_frame},
@@ -44,12 +44,13 @@ fn main() -> io::Result<()> {
                 let mut rng: ThreadRng = rand::rng();
 
                 let spec: ParticleSpec = ParticleSpec {
-                    gravity_scale: 0.0,
-                    speed: 1.0..=60.0,
+                    gravity_scale: 0.05,
+                    speed: 5.0..=rng.random_range(30.0..120.0),
                     lifetime_sec: 2.0,
                     // color: ParticleColor::Solid(Color::ORANGE.with_alpha(127)),
                     color: ParticleColor::Gradient(ColorGradient::new(vec![
-                        GradientStop::new(0.0, Color(rng.random()).with_alpha(255)),
+                        GradientStop::new(0.0, Color::WHITE),
+                        GradientStop::new(0.13, Color(rng.random()).with_alpha(255)),
                         GradientStop::new(1.0, Color(rng.random()).with_alpha(0)),
                     ])),
                     ..Default::default()
@@ -60,14 +61,19 @@ fn main() -> io::Result<()> {
                     //     width_deg: 75.0,
                     // },
                     shape: ParticleEmitterShape::Circle,
-                    count: 100,
+                    count: rng.random_range(50..200),
                     ..Default::default()
                 };
 
+                let x_a: f32 = TERM_COLS as f32 * 0.3;
+                let x_b: f32 = TERM_COLS as f32 * 0.7;
+                let y_a: f32 = TERM_ROWS as f32 * 0.3;
+                let y_b: f32 = TERM_ROWS as f32 * 0.7;
+
                 spawn_particles(
                     &mut engine,
-                    TERM_COLS as f32 / 2.0,
-                    TERM_ROWS as f32 / 2.0,
+                    rng.random_range(x_a..=x_b),
+                    rng.random_range(y_a..=y_b),
                     &spec,
                     &emitter,
                 );
