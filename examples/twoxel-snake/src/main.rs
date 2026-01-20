@@ -160,7 +160,6 @@ fn spawn_explosion(engine: &mut Engine, x: f32, y: f32) {
                 GradientStop::new(0.2, Color::RED),
                 GradientStop::new(1.0, Color::ORANGE.with_alpha(0)),
             ])),
-            ..Default::default()
         },
         &ParticleEmitter {
             count: 50,
