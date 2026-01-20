@@ -2,6 +2,7 @@
 resolver = "3"
 members = [
     "germterm",
+    "examples/hello-world",
     "examples/standard-blending",
     "examples/octad-merging",
     "examples/octad-particles",
