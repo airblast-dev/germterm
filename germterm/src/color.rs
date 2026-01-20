@@ -1,5 +1,54 @@
 use std::sync::Arc;
 
+pub static SOURCE_OVER_BLENDING_LUT: [[u8; 256]; 256] = {
+    let mut lut = [[0u8; 256]; 256];
+    let mut bottom_channel = 0;
+    while bottom_channel < 256 {
+        let mut top_alpha = 0;
+        while top_alpha < 256 {
+            lut[bottom_channel][top_alpha] =
+                ((bottom_channel * (255 - top_alpha) + 127) / 255) as u8;
+            top_alpha += 1;
+        }
+        bottom_channel += 1;
+    }
+    lut
+};
+
+pub static LERP_LUT_A: [[u8; 256]; 256] = {
+    let mut lut: [[u8; 256]; 256] = [[0u8; 256]; 256];
+    let mut channel_value: usize = 0;
+    while channel_value < 256 {
+        let mut t_value: usize = 0;
+        while t_value < 256 {
+            let scaled: usize = channel_value * (255 - t_value);
+            let rounded: usize = scaled + 128;
+            let final_value: u8 = (rounded / 255) as u8;
+            lut[channel_value][t_value] = final_value;
+            t_value += 1;
+        }
+        channel_value += 1;
+    }
+    lut
+};
+
+pub static LERP_LUT_B: [[u8; 256]; 256] = {
+    let mut lut: [[u8; 256]; 256] = [[0u8; 256]; 256];
+    let mut channel_value: usize = 0;
+    while channel_value < 256 {
+        let mut t_value: usize = 0;
+        while t_value < 256 {
+            let scaled: usize = channel_value * t_value;
+            let rounded: usize = scaled + 128;
+            let final_value: u8 = (rounded / 255) as u8;
+            lut[channel_value][t_value] = final_value;
+            t_value += 1;
+        }
+        channel_value += 1;
+    }
+    lut
+};
+
 /// A packed RGBA color stored as a single `u32`.
 ///
 /// Layout:
@@ -125,19 +174,15 @@ impl ColorGradient {
 
 #[inline]
 pub fn blend_source_over(bottom: Color, top: Color) -> Color {
-    let (br, bg, bb, ba) = bottom.rgba_f32();
-    let (tr, tg, tb, ta) = top.rgba_f32();
+    let (b_r, b_g, b_b, b_a) = bottom.rgba();
+    let (t_r, t_g, t_b, t_a) = top.rgba();
 
-    let out_a = ta + ba * (1.0 - ta);
-    if out_a <= 0.0 {
-        return Color::CLEAR;
-    }
+    let out_r: u8 = t_r.wrapping_add(SOURCE_OVER_BLENDING_LUT[b_r as usize][t_a as usize]);
+    let out_g: u8 = t_g.wrapping_add(SOURCE_OVER_BLENDING_LUT[b_g as usize][t_a as usize]);
+    let out_b: u8 = t_b.wrapping_add(SOURCE_OVER_BLENDING_LUT[b_b as usize][t_a as usize]);
+    let out_a: u8 = t_a.wrapping_add(SOURCE_OVER_BLENDING_LUT[b_a as usize][t_a as usize]);
 
-    let out_r = (tr * ta + br * ba * (1.0 - ta)) / out_a;
-    let out_g = (tg * ta + bg * ba * (1.0 - ta)) / out_a;
-    let out_b = (tb * ta + bb * ba * (1.0 - ta)) / out_a;
-
-    Color::from_f32(out_r, out_g, out_b, out_a)
+    Color::new(out_r, out_g, out_b, out_a)
 }
 
 pub fn sample_gradient(gradient: &ColorGradient, t: f32) -> Color {
@@ -163,19 +208,20 @@ pub fn sample_gradient(gradient: &ColorGradient, t: f32) -> Color {
 }
 
 pub fn lerp(color_a: Color, color_b: Color, t: f32) -> Color {
-    let t: f32 = t.clamp(0.0, 1.0);
-    let t_u32: u32 = (t * 255.0).round() as u32;
-    let inv_t: u32 = 255 - t_u32;
+    let clamped_t: f32 = t.clamp(0.0, 1.0);
+    let t_scaled: u8 = (clamped_t * 255.0).round() as u8;
 
-    let blend = |a: u32, b: u32| -> u8 {
-        let x: u32 = a * inv_t + b * t_u32;
-        ((x + 128 + (x >> 8)) >> 8) as u8
-    };
+    let (a_r, a_g, a_b, a_a) = color_a.rgba();
+    let (b_r, b_g, b_b, b_a) = color_b.rgba();
 
-    let r: u8 = blend(color_a.r() as u32, color_b.r() as u32);
-    let g: u8 = blend(color_a.g() as u32, color_b.g() as u32);
-    let b: u8 = blend(color_a.b() as u32, color_b.b() as u32);
-    let a: u8 = blend(color_a.a() as u32, color_b.a() as u32);
+    let out_r: u8 =
+        LERP_LUT_A[a_r as usize][t_scaled as usize] + LERP_LUT_B[b_r as usize][t_scaled as usize];
+    let out_g: u8 =
+        LERP_LUT_A[a_g as usize][t_scaled as usize] + LERP_LUT_B[b_g as usize][t_scaled as usize];
+    let out_b: u8 =
+        LERP_LUT_A[a_b as usize][t_scaled as usize] + LERP_LUT_B[b_b as usize][t_scaled as usize];
+    let out_a: u8 =
+        LERP_LUT_A[a_a as usize][t_scaled as usize] + LERP_LUT_B[b_a as usize][t_scaled as usize];
 
-    Color::new(r, g, b, a)
+    Color::new(out_r, out_g, out_b, out_a)
 }
