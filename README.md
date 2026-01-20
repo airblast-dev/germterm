@@ -18,10 +18,6 @@ Germterm is a lightweight, high-performance terminal graphics framework in Rust.
 - Crossplatform ([crossterm](https://github.com/crossterm-rs/crossterm) backend)
 - Simple to use API
 
-## Dependencies
-
-This project only uses `crossterm`, `bitflags` and `rand` as its dependencies.
-
 ## Getting started
 
 See the [examples](examples/) directory for more advanced examples.
@@ -67,3 +63,7 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 ```
+
+## Dependencies
+
+This project only uses `crossterm`, `bitflags` and `rand` as its dependencies.
