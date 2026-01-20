@@ -162,3 +162,8 @@ pub fn spawn_particles(
         }
     }
 }
+
+#[inline]
+pub fn particle_count(engine: &Engine) -> usize {
+    engine.particle_state.len()
+}
