@@ -14,10 +14,11 @@ bitflags! {
         const HIDDEN     = 0b_0000_1000;
         // Renderer specific metadata
         //
-        // Used internally to help the compositor distinguish
-        // between special drawing formats and regular draw calls
-        const TWOXEL     = 0b_0001_0000;    // Incompatible with OCTAD
-        const OCTAD      = 0b_0010_0000;    // Incompatible with TWOXEL
+        // Used internally to help the compositor identify drawing formats
+        /// Incompatible with OCTAD
+        const TWOXEL     = 0b_0001_0000;
+        /// Incompatible with TWOXEL
+        const OCTAD      = 0b_0010_0000;
     }
 }
 

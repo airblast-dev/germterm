@@ -248,12 +248,10 @@ fn compose_cell(old: Cell, new: Cell) -> Cell {
     let old_twoxel: bool = old.attributes.contains(Attributes::TWOXEL);
     let old_octad: bool = old.attributes.contains(Attributes::OCTAD);
     let both_ch_equal: bool = old.ch == new.ch;
-    // let both_fg_equal: bool = old.fg == new.fg;
 
     match cell_format(new.attributes) {
         CellFormat::Twoxel => {
             let (ch, attributes): (char, Attributes) = if old_twoxel {
-                // Skip and let bg draw the twoxel instead
                 (old.ch, old.attributes)
             } else {
                 (new.ch, new.attributes)
@@ -275,8 +273,10 @@ fn compose_cell(old: Cell, new: Cell) -> Cell {
                 old.bg
             } else if old_twoxel {
                 blend_source_over(old.bg, new.fg)
-            } else {
+            } else if new_bg_opaque {
                 old.bg
+            } else {
+                blend_source_over(old.bg, new.bg)
             };
 
             Cell {
@@ -295,12 +295,21 @@ fn compose_cell(old: Cell, new: Cell) -> Cell {
 
             let fg: Color = if old_octad {
                 lerp(old.fg, blend_source_over(old.fg, new.fg), 0.5)
-            } else {
+            } else if new_fg_opaque {
+                new.fg
+            } else if old_fg_invisible || old_ch_blank {
                 blend_source_over(old.bg, new.fg)
+            } else {
+                blend_source_over(old.fg, new.fg)
             };
 
-            // TODO: Add background blending here
-            let bg: Color = Color::CLEAR;
+            let bg: Color = if new_bg_opaque {
+                new.bg
+            } else if new_bg_invisible {
+                old.bg
+            } else {
+                blend_source_over(old.bg, new.bg)
+            };
 
             Cell {
                 ch,
@@ -311,7 +320,6 @@ fn compose_cell(old: Cell, new: Cell) -> Cell {
         }
         CellFormat::Standard => {
             let (ch, attributes): (char, Attributes) = if new_bg_opaque {
-                // Opaque bg should cover the ch underneath
                 (new.ch, new.attributes)
             } else if new_ch_blank {
                 (old.ch, old.attributes)
@@ -319,8 +327,9 @@ fn compose_cell(old: Cell, new: Cell) -> Cell {
                 (new.ch, new.attributes)
             };
 
-            let fg: Color = if new_bg_translucent {
-                // Translucent bg should blend the fg underneath
+            let fg: Color = if new_fg_opaque && !new_ch_blank {
+                new.fg
+            } else if new_bg_translucent {
                 blend_source_over(old.fg, new.bg)
             } else if new_ch_blank {
                 old.fg

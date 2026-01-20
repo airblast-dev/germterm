@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 /// A packed RGBA color stored as a single `u32`.
 ///
 /// Layout:
@@ -27,6 +29,7 @@ impl Color {
     pub const VIOLET: Color = Color(0x7F_00_FF_FF);
     pub const PINK: Color = Color(0xFF_C0_CB_FF);
     pub const ORANGE: Color = Color(0xFF_A5_00_FF);
+    pub const DARK_GREEN: Color = Color(0x08_48_08_FF);
     pub const CLEAR: Color = Color(0x00_00_00_00);
 
     #[inline]
@@ -103,7 +106,7 @@ impl GradientStop {
 
 #[derive(Clone)]
 pub struct ColorGradient {
-    pub stops: Vec<GradientStop>,
+    pub stops: Arc<Vec<GradientStop>>,
 }
 
 impl ColorGradient {
@@ -114,7 +117,9 @@ impl ColorGradient {
     pub fn new(stops: Vec<GradientStop>) -> Self {
         assert!(!stops.is_empty(), "Gradient must have at least 1 stop");
 
-        ColorGradient { stops }
+        ColorGradient {
+            stops: Arc::new(stops),
+        }
     }
 }
 

@@ -1,7 +1,7 @@
 use germterm::{
-    color::{Color, ColorGradient, GradientStop, lerp},
+    color::{Color, ColorGradient, GradientStop},
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind},
-    draw::{Pos, draw_octad, draw_text, fill_screen},
+    draw::{draw_text, fill_screen},
     engine::{Engine, end_frame, exit_cleanup, init, start_frame},
     fps_counter::draw_fps_counter,
     input::poll_input,
@@ -11,15 +11,15 @@ use germterm::{
 };
 use rand::{Rng, rngs::ThreadRng};
 
-use std::{f32::consts::PI, io};
+use std::io;
 
 pub const TERM_COLS: u16 = 80;
 pub const TERM_ROWS: u16 = 24;
 
 fn main() -> io::Result<()> {
     let mut engine: Engine = Engine::new(TERM_COLS, TERM_ROWS)
-        .title("particles")
-        .limit_fps(0);
+        .title("octad-particles")
+        .limit_fps(240);
 
     init(&mut engine)?;
     'game_loop: loop {
@@ -47,22 +47,15 @@ fn main() -> io::Result<()> {
                     gravity_scale: rng.random_range(0.04..0.07),
                     speed: 5.0..=rng.random_range(30.0..120.0),
                     lifetime_sec: 2.0,
-                    // color: ParticleColor::Solid(Color::ORANGE.with_alpha(127)),
                     color: ParticleColor::Gradient(ColorGradient::new(vec![
                         GradientStop::new(0.0, Color::WHITE),
                         GradientStop::new(0.13, Color(rng.random()).with_alpha(255)),
                         GradientStop::new(1.0, Color(rng.random()).with_alpha(0)),
                     ])),
-                    ..Default::default()
                 };
                 let emitter: ParticleEmitter = ParticleEmitter {
-                    // shape: ParticleEmitterShape::Cone {
-                    //     direction_deg: -90.0,
-                    //     width_deg: 75.0,
-                    // },
                     shape: ParticleEmitterShape::Circle,
                     count: rng.random_range(25..200),
-                    ..Default::default()
                 };
 
                 let x_a: f32 = TERM_COLS as f32 * 0.3;
@@ -80,7 +73,14 @@ fn main() -> io::Result<()> {
             }
         }
 
-        draw_fps_counter(&mut engine, Pos::new(0, 0));
+        draw_text(
+            &mut engine,
+            26,
+            (TERM_ROWS / 2) as i16,
+            "Press W to spawn particles!",
+        );
+
+        draw_fps_counter(&mut engine, 0, 0);
 
         end_frame(&mut engine)?;
     }
