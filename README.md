@@ -2,9 +2,9 @@
 [![License](https://img.shields.io/badge/license-MIT-orange)](https://mit-license.org/)
 [![Build status](https://img.shields.io/github/actions/workflow/status/thehuglet/germterm/.github%2Fworkflows%2Frelease.yml)](https://github.com/thehuglet/germterm/actions)
 
-# `germ-term`
+# `germterm`
 
-Germterm is a lightweight, high-performance terminal graphics framework in Rust. It renders in real time and supports drawing with transparency through alpha blending, all through a simple to use API.
+A lightweight, high-performance terminal graphics framework in Rust. It renders in real time and supports drawing with transparency through alpha blending, all through a simple to use API.
 
 ## Features
 
