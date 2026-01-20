@@ -1,4 +1,5 @@
 [![Rust](https://img.shields.io/badge/Rust-000000?logo=rust&logoColor=orange)](https://www.rust-lang.org/)
+[![Build status](https://img.shields.io/github/actions/workflow/status/thehuglet/germterm/.github%2Fworkflows%2Frelease.yml)](https://github.com/thehuglet/germterm/actions)
 [![License](https://img.shields.io/badge/license-MIT-orange)](https://mit-license.org/)
 
 # `germ-term`
