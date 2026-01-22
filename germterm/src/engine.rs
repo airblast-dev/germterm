@@ -11,7 +11,7 @@ pub struct Engine {
     pub delta_time: f32,
     pub game_time: f32,
     title: &'static str,
-    stdout: io::Stdout,
+    pub stdout: io::Stdout,
     pub(crate) frame: Frame,
     pub(crate) fps_limiter: FpsLimiter,
     pub(crate) fps_counter: FpsCounter,
