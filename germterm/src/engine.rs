@@ -55,7 +55,6 @@ pub fn init(engine: &mut Engine) -> io::Result<()> {
         terminal::SetTitle(engine.title),
         event::EnableMouseCapture,
         cursor::Hide,
-        terminal::SetSize(engine.frame.cols, engine.frame.rows)
     )?;
     Ok(())
 }
