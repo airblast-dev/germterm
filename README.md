@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/header-banner.png" width="100%">
+  <img src="https://github.com/thehuglet/germterm/blob/main/assets/header-banner.png" width="100%">
 </p>
 
 <div align="center">
