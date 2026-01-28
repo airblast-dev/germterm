@@ -35,6 +35,12 @@ pub fn draw_text(layer: &mut Layer, x: i16, y: i16, text: impl Into<RichText>) {
     internal::draw_text(draw_queue, x, y, text);
 }
 
+pub fn erase_rect(layer: &mut Layer, x: i16, y: i16, width: i16, height: i16) {
+    let engine: &mut Engine = unsafe { &mut *layer.engine_ptr };
+    let draw_queue: &mut Vec<DrawCall> = &mut engine.frame.draw_queue[layer.index];
+    internal::erase_rect(draw_queue, x, y, width, height)
+}
+
 pub fn draw_rect(layer: &mut Layer, x: i16, y: i16, width: i16, height: i16, color: Color) {
     let engine: &mut Engine = unsafe { &mut *layer.engine_ptr };
     let draw_queue: &mut Vec<DrawCall> = &mut engine.frame.draw_queue[layer.index];
@@ -54,6 +60,8 @@ pub fn draw_twoxel(layer: &mut Layer, x: f32, y: f32, color: Color) {
 }
 
 pub(crate) mod internal {
+    use std::sync::Arc;
+
     use crate::{
         color::Color,
         frame::DrawCall,
@@ -78,7 +86,21 @@ pub(crate) mod internal {
         color: Color,
     ) {
         let row_text: String = " ".repeat(width as usize);
-        let row_rich_text: RichText = RichText::new(&row_text).fg(Color::BLACK).bg(color);
+        let row_rich_text: RichText = RichText::new(&row_text).fg(Color::CLEAR).bg(color);
+
+        for row in 0..height {
+            draw_text(draw_queue, x, y + row, row_rich_text.clone())
+        }
+    }
+
+    pub fn erase_rect(draw_queue: &mut Vec<DrawCall>, x: i16, y: i16, width: i16, height: i16) {
+        let row_text: String = " ".repeat(width as usize);
+        let row_rich_text: RichText = RichText {
+            text: Arc::new(row_text),
+            fg: None,
+            bg: None,
+            attributes: Attributes::empty(),
+        };
 
         for row in 0..height {
             draw_text(draw_queue, x, y + row, row_rich_text.clone())

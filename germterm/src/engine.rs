@@ -1,4 +1,5 @@
 use crate::{
+    draw::{Layer, erase_rect},
     fps_counter::{FpsCounter, update_fps_counter},
     fps_limiter::{self, FpsLimiter, wait_for_next_frame},
     frame::{Frame, compose_frame_buffer, copy_frame_buffer, diff_frame_buffers, draw_to_terminal},
@@ -81,6 +82,15 @@ pub fn start_frame(engine: &mut Engine) {
     }
 
     engine.frame.flat_draw_queue.clear();
+
+    // let mut lowest_possible_layer = Layer::new(engine, 0);
+    // erase_rect(
+    //     &mut lowest_possible_layer,
+    //     0,
+    //     0,
+    //     engine.frame.cols as i16,
+    //     engine.frame.rows as i16,
+    // );
 }
 
 pub fn end_frame(engine: &mut Engine) -> io::Result<()> {

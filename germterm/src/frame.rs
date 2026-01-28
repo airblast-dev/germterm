@@ -26,8 +26,8 @@ pub struct DrawCall {
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub struct Cell {
     pub ch: char,
-    pub fg: Color,
-    pub bg: Color,
+    pub fg: Option<Color>,
+    pub bg: Option<Color>,
     pub attributes: Attributes,
 }
 
@@ -72,8 +72,8 @@ impl Frame {
         let empty_buffer: FrameBuffer = FrameBuffer(vec![
             Cell {
                 ch: ' ',
-                fg: Color::CLEAR,
-                bg: Color::CLEAR,
+                fg: None,
+                bg: None,
                 attributes: Attributes::empty(),
             };
             vec_capacity
@@ -175,17 +175,17 @@ pub fn diff_frame_buffers(
 }
 
 pub fn build_crossterm_content_style(cell: &Cell) -> crossterm::style::ContentStyle {
-    let fg_color: crossterm::style::Color = crossterm::style::Color::Rgb {
-        r: cell.fg.r(),
-        g: cell.fg.g(),
-        b: cell.fg.b(),
-    };
+    let fg_color = cell.fg.map(|fg| crossterm::style::Color::Rgb {
+        r: fg.r(),
+        g: fg.g(),
+        b: fg.b(),
+    });
 
-    let bg_color: crossterm::style::Color = crossterm::style::Color::Rgb {
-        r: cell.bg.r(),
-        g: cell.bg.g(),
-        b: cell.bg.b(),
-    };
+    let bg_color = cell.bg.map(|bg| crossterm::style::Color::Rgb {
+        r: bg.r(),
+        g: bg.g(),
+        b: bg.b(),
+    });
 
     let attributes = [
         (Attributes::BOLD, ctstyle::Attribute::Bold),
@@ -206,8 +206,8 @@ pub fn build_crossterm_content_style(cell: &Cell) -> crossterm::style::ContentSt
     );
 
     ctstyle::ContentStyle {
-        foreground_color: Some(fg_color),
-        background_color: Some(bg_color),
+        foreground_color: fg_color,
+        background_color: bg_color,
         underline_color: None,
         attributes,
     }
@@ -243,25 +243,16 @@ pub(crate) fn copy_frame_buffer(to: &mut FrameBuffer, from: &FrameBuffer) {
 
 #[inline]
 fn compose_cell(old: Cell, new: Cell) -> Cell {
-    let old_fg_invisible: bool = old.fg.a() == 0;
-    let new_fg_opaque: bool = new.fg.a() == 255;
-    let new_bg_opaque: bool = new.bg.a() == 255;
-    let new_bg_invisible: bool = new.bg.a() == 0;
+    let old_fg_invisible: bool = old.fg.is_none_or(|c| c.a() == 0);
+    let new_fg_opaque: bool = new.fg.is_some_and(|c| c.a() == 255);
+    let new_bg_invisible: bool = new.bg.is_none_or(|c| c.a() == 0);
+    let new_bg_opaque: bool = new.bg.is_some_and(|c| c.a() == 255);
     let new_bg_translucent: bool = !new_bg_opaque && !new_bg_invisible;
     let old_ch_blank: bool = old.ch == ' ';
     let new_ch_blank: bool = new.ch == ' ';
     let old_twoxel: bool = old.attributes.contains(Attributes::TWOXEL);
     let old_octad: bool = old.attributes.contains(Attributes::OCTAD);
     let both_ch_equal: bool = old.ch == new.ch;
-
-    if new.attributes.contains(Attributes::FORCED_OVERRIDE) {
-        return Cell {
-            ch: new.ch,
-            fg: new.fg,
-            bg: new.bg,
-            attributes: new.attributes,
-        };
-    }
 
     match cell_format(new.attributes) {
         CellFormat::Twoxel => {
@@ -271,26 +262,26 @@ fn compose_cell(old: Cell, new: Cell) -> Cell {
                 (new.ch, new.attributes)
             };
 
-            let fg: Color = if old_twoxel && both_ch_equal {
-                blend_source_over(old.fg, new.fg)
+            let fg: Option<Color> = if old_twoxel && both_ch_equal {
+                Some(blend_source_over(old.fg.unwrap(), new.fg.unwrap()))
             } else if old_twoxel {
-                old.fg
+                Some(old.fg.unwrap())
             } else if new_fg_opaque {
-                new.fg
+                Some(new.fg.unwrap())
             } else if old_fg_invisible || old_ch_blank {
-                blend_source_over(old.bg, new.fg)
+                Some(blend_source_over(old.bg.unwrap(), new.fg.unwrap()))
             } else {
-                blend_source_over(old.fg, new.fg)
+                Some(blend_source_over(old.fg.unwrap(), new.fg.unwrap()))
             };
 
-            let bg: Color = if old_twoxel && both_ch_equal {
-                old.bg
+            let bg: Option<Color> = if old_twoxel && both_ch_equal {
+                Some(old.bg.unwrap())
             } else if old_twoxel {
-                blend_source_over(old.bg, new.fg)
+                Some(blend_source_over(old.bg.unwrap(), new.fg.unwrap()))
             } else if new_bg_opaque {
-                old.bg
+                Some(old.bg.unwrap())
             } else {
-                blend_source_over(old.bg, new.bg)
+                Some(blend_source_over(old.bg.unwrap(), new.bg.unwrap()))
             };
 
             Cell {
@@ -300,6 +291,7 @@ fn compose_cell(old: Cell, new: Cell) -> Cell {
                 attributes,
             }
         }
+
         CellFormat::Octad => {
             let (ch, attributes): (char, Attributes) = if old_octad {
                 (merge_octad(old.ch, new.ch), new.attributes)
@@ -307,22 +299,26 @@ fn compose_cell(old: Cell, new: Cell) -> Cell {
                 (new.ch, new.attributes)
             };
 
-            let fg: Color = if old_octad {
-                lerp(old.fg, blend_source_over(old.fg, new.fg), 0.5)
+            let fg: Option<Color> = if old_octad {
+                Some(lerp(
+                    old.fg.unwrap(),
+                    blend_source_over(old.fg.unwrap(), new.fg.unwrap()),
+                    0.5,
+                ))
             } else if new_fg_opaque {
-                new.fg
+                Some(new.fg.unwrap())
             } else if old_fg_invisible || old_ch_blank {
-                blend_source_over(old.bg, new.fg)
+                Some(blend_source_over(old.bg.unwrap(), new.fg.unwrap()))
             } else {
-                blend_source_over(old.fg, new.fg)
+                Some(blend_source_over(old.fg.unwrap(), new.fg.unwrap()))
             };
 
-            let bg: Color = if new_bg_opaque {
-                new.bg
+            let bg: Option<Color> = if new_bg_opaque {
+                Some(new.bg.unwrap())
             } else if new_bg_invisible {
-                old.bg
+                Some(old.bg.unwrap())
             } else {
-                blend_source_over(old.bg, new.bg)
+                Some(blend_source_over(old.bg.unwrap(), new.bg.unwrap()))
             };
 
             Cell {
@@ -332,8 +328,9 @@ fn compose_cell(old: Cell, new: Cell) -> Cell {
                 attributes,
             }
         }
+
         CellFormat::Standard => {
-            let (ch, attributes): (char, Attributes) = if new_bg_opaque {
+            let (ch, attributes): (char, Attributes) = if new.fg.is_none() || new_bg_opaque {
                 (new.ch, new.attributes)
             } else if new_ch_blank {
                 (old.ch, old.attributes)
@@ -341,24 +338,28 @@ fn compose_cell(old: Cell, new: Cell) -> Cell {
                 (new.ch, new.attributes)
             };
 
-            let fg: Color = if new_fg_opaque && !new_ch_blank {
-                new.fg
+            let fg: Option<Color> = if new.fg.is_none() {
+                None
+            } else if (new_fg_opaque && !new_ch_blank) || old.fg.is_none() {
+                Some(new.fg.unwrap())
             } else if new_bg_translucent {
-                blend_source_over(old.fg, new.bg)
+                Some(blend_source_over(old.fg.unwrap(), new.bg.unwrap()))
             } else if new_ch_blank {
-                old.fg
+                Some(old.fg.unwrap())
             } else if old_fg_invisible || old_ch_blank {
-                blend_source_over(old.bg, new.fg)
+                Some(blend_source_over(old.bg.unwrap(), new.fg.unwrap()))
             } else {
-                blend_source_over(old.fg, new.fg)
+                Some(blend_source_over(old.fg.unwrap(), new.fg.unwrap()))
             };
 
-            let bg: Color = if new_bg_opaque {
-                new.bg
-            } else if new_bg_invisible {
-                old.bg
+            let bg: Option<Color> = if old.bg.is_none() && new.bg.is_none() {
+                None
+            } else if new_bg_opaque || old.bg.is_none() {
+                Some(new.bg.unwrap())
+            } else if new_bg_invisible || new.bg.is_none() {
+                Some(old.bg.unwrap())
             } else {
-                blend_source_over(old.bg, new.bg)
+                Some(blend_source_over(old.bg.unwrap(), new.bg.unwrap()))
             };
 
             Cell {
