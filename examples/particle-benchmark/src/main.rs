@@ -4,7 +4,6 @@ use germterm::draw::Layer;
 use germterm::{
     color::Color,
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind},
-    draw::fill_screen,
     engine::{Engine, end_frame, exit_cleanup, init, start_frame},
     fps_counter::draw_fps_counter,
     input::poll_input,

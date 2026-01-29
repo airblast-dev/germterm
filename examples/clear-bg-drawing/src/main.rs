@@ -1,7 +1,6 @@
 use germterm::{
-    color::Color,
     crossterm::event::{Event, KeyCode, KeyEvent},
-    draw::{Layer, draw_text, fill_screen},
+    draw::{Layer, draw_text},
     engine::{Engine, end_frame, exit_cleanup, init, start_frame},
     input::poll_input,
 };

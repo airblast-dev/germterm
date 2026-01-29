@@ -1,6 +1,6 @@
 # twoxel-snake
 
-![Preview](preview.jpg)
+![Preview](preview.png)
 
 Snake implemented using the engine's built-in features:
 

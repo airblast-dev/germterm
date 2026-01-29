@@ -270,13 +270,16 @@ fn compose_cell(old: Cell, new: Cell, default_blending_color: Color) -> Cell {
             } else if new_fg_opaque {
                 Some(new.fg.unwrap())
             } else if old_fg_invisible || old_ch_blank {
-                Some(blend_source_over(old.bg.unwrap(), new.fg.unwrap()))
+                Some(blend_source_over(
+                    old.bg.unwrap_or(default_blending_color),
+                    new.fg.unwrap_or(default_blending_color),
+                ))
             } else {
                 Some(blend_source_over(old.fg.unwrap(), new.fg.unwrap()))
             };
 
             let bg: Option<Color> = if old_twoxel && both_ch_equal {
-                Some(old.bg.unwrap())
+                Some(old.bg.unwrap_or(default_blending_color))
             } else if old_twoxel && new.bg.is_none() {
                 Some(new.fg.unwrap())
             } else if old.bg.is_none() && !old_twoxel {
@@ -308,14 +311,16 @@ fn compose_cell(old: Cell, new: Cell, default_blending_color: Color) -> Cell {
                 None
             } else if old_octad {
                 Some(lerp(
-                    old.fg.unwrap(),
-                    blend_source_over(old.fg.unwrap(), new.fg.unwrap()),
+                    old.fg.unwrap_or(default_blending_color),
+                    blend_source_over(old.fg.unwrap_or(default_blending_color), new.fg.unwrap()),
                     0.5,
                 ))
             } else if old.fg.is_none() {
                 Some(blend_source_over(default_blending_color, new.fg.unwrap()))
             } else if new_fg_opaque {
                 Some(new.fg.unwrap())
+            } else if new.fg.is_none() || old.bg.is_none() {
+                None
             } else if old_fg_invisible || old_ch_blank {
                 Some(blend_source_over(old.bg.unwrap(), new.fg.unwrap()))
             } else {
