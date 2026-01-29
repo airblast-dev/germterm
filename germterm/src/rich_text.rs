@@ -17,12 +17,6 @@ bitflags! {
         const TWOXEL        = 0b_0001_0000;
         /// Incompatible with TWOXEL
         const OCTAD         = 0b_0010_0000;
-        // Erases the cell.
-
-        // This will cause the cell's `ch`, `fg` and `bg` to be ignored completely.
-
-        // The `fg` and `bg` values passed to `crossterm` will be set to `None` and `ch` will be set to a blank space.
-        // const ERASE_CELL    = 0b_0100_0000;
     }
 }
 
@@ -39,7 +33,7 @@ impl RichText {
         Self {
             text: Arc::new(text.into()),
             fg: Some(Color::WHITE),
-            bg: None,
+            bg: Some(Color::CLEAR),
             attributes: Attributes::empty(),
         }
     }

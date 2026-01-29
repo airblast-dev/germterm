@@ -97,6 +97,7 @@ pub fn compose_frame_buffer(
     draw_queue: &[DrawCall],
     cols: u16,
     rows: u16,
+    default_blending_color: Color,
 ) {
     let (cols, rows) = (cols as i16, rows as i16);
 
@@ -137,7 +138,7 @@ pub fn compose_frame_buffer(
                 attributes: draw_call.rich_text.attributes,
             };
 
-            buffer.0[cell_index] = compose_cell(old_cell, new_cell);
+            buffer.0[cell_index] = compose_cell(old_cell, new_cell, default_blending_color);
         }
     }
 }
@@ -242,7 +243,7 @@ pub(crate) fn copy_frame_buffer(to: &mut FrameBuffer, from: &FrameBuffer) {
 }
 
 #[inline]
-fn compose_cell(old: Cell, new: Cell) -> Cell {
+fn compose_cell(old: Cell, new: Cell, default_blending_color: Color) -> Cell {
     let old_fg_invisible: bool = old.fg.is_none_or(|c| c.a() == 0);
     let new_fg_opaque: bool = new.fg.is_some_and(|c| c.a() == 255);
     let new_bg_invisible: bool = new.bg.is_none_or(|c| c.a() == 0);
@@ -256,7 +257,7 @@ fn compose_cell(old: Cell, new: Cell) -> Cell {
 
     match cell_format(new.attributes) {
         CellFormat::Twoxel => {
-            let (ch, attributes): (char, Attributes) = if old_twoxel {
+            let (ch, attributes): (char, Attributes) = if old_twoxel && new.fg.is_some() {
                 (old.ch, old.attributes)
             } else {
                 (new.ch, new.attributes)
@@ -276,10 +277,14 @@ fn compose_cell(old: Cell, new: Cell) -> Cell {
 
             let bg: Option<Color> = if old_twoxel && both_ch_equal {
                 Some(old.bg.unwrap())
+            } else if old_twoxel && new.bg.is_none() {
+                Some(new.fg.unwrap())
+            } else if old.bg.is_none() && !old_twoxel {
+                None
+            } else if old.bg.is_none() {
+                Some(new.fg.unwrap())
             } else if old_twoxel {
                 Some(blend_source_over(old.bg.unwrap(), new.fg.unwrap()))
-            } else if new_bg_opaque {
-                Some(old.bg.unwrap())
             } else {
                 Some(blend_source_over(old.bg.unwrap(), new.bg.unwrap()))
             };
@@ -293,18 +298,22 @@ fn compose_cell(old: Cell, new: Cell) -> Cell {
         }
 
         CellFormat::Octad => {
-            let (ch, attributes): (char, Attributes) = if old_octad {
+            let (ch, attributes): (char, Attributes) = if old_octad && new.fg.is_some() {
                 (merge_octad(old.ch, new.ch), new.attributes)
             } else {
                 (new.ch, new.attributes)
             };
 
-            let fg: Option<Color> = if old_octad {
+            let fg: Option<Color> = if new.fg.is_none() {
+                None
+            } else if old_octad {
                 Some(lerp(
                     old.fg.unwrap(),
                     blend_source_over(old.fg.unwrap(), new.fg.unwrap()),
                     0.5,
                 ))
+            } else if old.fg.is_none() {
+                Some(blend_source_over(default_blending_color, new.fg.unwrap()))
             } else if new_fg_opaque {
                 Some(new.fg.unwrap())
             } else if old_fg_invisible || old_ch_blank {
@@ -313,10 +322,10 @@ fn compose_cell(old: Cell, new: Cell) -> Cell {
                 Some(blend_source_over(old.fg.unwrap(), new.fg.unwrap()))
             };
 
-            let bg: Option<Color> = if new_bg_opaque {
+            let bg: Option<Color> = if old.bg.is_none() && (new.bg.is_none() || new_bg_invisible) {
+                None
+            } else if new_bg_opaque || old.bg.is_none() {
                 Some(new.bg.unwrap())
-            } else if new_bg_invisible {
-                Some(old.bg.unwrap())
             } else {
                 Some(blend_source_over(old.bg.unwrap(), new.bg.unwrap()))
             };
@@ -352,11 +361,13 @@ fn compose_cell(old: Cell, new: Cell) -> Cell {
                 Some(blend_source_over(old.fg.unwrap(), new.fg.unwrap()))
             };
 
-            let bg: Option<Color> = if old.bg.is_none() && new.bg.is_none() {
+            let bg: Option<Color> = if old.bg.is_none() && (new.bg.is_none() || new_bg_invisible) {
                 None
             } else if new_bg_opaque || old.bg.is_none() {
                 Some(new.bg.unwrap())
-            } else if new_bg_invisible || new.bg.is_none() {
+            } else if new.bg.is_none() {
+                None
+            } else if new_bg_invisible {
                 Some(old.bg.unwrap())
             } else {
                 Some(blend_source_over(old.bg.unwrap(), new.bg.unwrap()))

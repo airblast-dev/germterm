@@ -1,7 +1,6 @@
 use germterm::{
-    color::Color,
     crossterm::event::{Event, KeyCode, KeyEvent},
-    draw::{Layer, draw_text, fill_screen},
+    draw::{Layer, draw_text},
     engine::{Engine, end_frame, exit_cleanup, init, start_frame},
     fps_counter::draw_fps_counter,
     input::poll_input,
@@ -28,7 +27,6 @@ fn main() -> io::Result<()> {
         }
 
         // Draw contents
-        fill_screen(&mut layer, Color::BLACK);
         draw_text(&mut layer, 14, 9, "Hello world!");
         draw_fps_counter(&mut layer, 0, 0);
 

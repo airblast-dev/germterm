@@ -1,4 +1,5 @@
 use crate::{
+    color::Color,
     draw::{Layer, erase_rect},
     fps_counter::{FpsCounter, update_fps_counter},
     fps_limiter::{self, FpsLimiter, wait_for_next_frame},
@@ -11,13 +12,14 @@ use std::io::{self};
 pub struct Engine {
     pub delta_time: f32,
     pub game_time: f32,
-    title: &'static str,
     pub stdout: io::Stdout,
     pub(crate) max_layer_index: usize,
     pub(crate) frame: Frame,
     pub(crate) fps_limiter: FpsLimiter,
     pub(crate) fps_counter: FpsCounter,
     pub(crate) particle_state: Vec<ParticleState>,
+    pub(crate) default_blending_color: Color,
+    title: &'static str,
 }
 
 impl Engine {
@@ -32,6 +34,7 @@ impl Engine {
             fps_limiter: FpsLimiter::new(60, 0.001, 0.002),
             fps_counter: FpsCounter::new(0.08),
             particle_state: Vec::with_capacity(512),
+            default_blending_color: Color::BLACK,
         }
     }
 
@@ -43,6 +46,17 @@ impl Engine {
     /// A value of `0` will result in uncapped FPS.
     pub fn limit_fps(mut self, value: u32) -> Self {
         fps_limiter::limit_fps(&mut self.fps_limiter, value);
+        self
+    }
+
+    /// Sets a default blending color to be used in non-opaque
+    /// drawing blending when no color is present underneath.
+    ///
+    /// Only the RGB channels are taken into account, A is overriden with 255.
+    ///
+    /// For the best results, this should match the default color of the terminal background.
+    pub fn default_blending_color(mut self, color: Color) -> Self {
+        self.default_blending_color = color.with_alpha(255);
         self
     }
 }
@@ -83,14 +97,14 @@ pub fn start_frame(engine: &mut Engine) {
 
     engine.frame.flat_draw_queue.clear();
 
-    // let mut lowest_possible_layer = Layer::new(engine, 0);
-    // erase_rect(
-    //     &mut lowest_possible_layer,
-    //     0,
-    //     0,
-    //     engine.frame.cols as i16,
-    //     engine.frame.rows as i16,
-    // );
+    let mut lowest_possible_layer = Layer::new(engine, 0);
+    erase_rect(
+        &mut lowest_possible_layer,
+        0,
+        0,
+        engine.frame.cols as i16,
+        engine.frame.rows as i16,
+    );
 }
 
 pub fn end_frame(engine: &mut Engine) -> io::Result<()> {
@@ -105,6 +119,7 @@ pub fn end_frame(engine: &mut Engine) -> io::Result<()> {
         &engine.frame.flat_draw_queue,
         engine.frame.cols,
         engine.frame.rows,
+        engine.default_blending_color,
     );
     diff_frame_buffers(
         &mut engine.frame.diff_products,

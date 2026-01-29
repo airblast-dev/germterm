@@ -87,7 +87,7 @@ fn main() -> io::Result<()> {
         }
 
         start_frame(&mut engine);
-        fill_screen(&mut background_layer, Color::BLACK);
+        // fill_screen(&mut background_layer, Color::BLACK);
 
         move_timer += engine.delta_time;
         let step_time: f32 = 1.0 / movement_speed;
@@ -170,7 +170,7 @@ fn spawn_explosion(layer: &mut Layer, x: f32, y: f32) {
             ])),
         },
         &ParticleEmitter {
-            count: 50,
+            count: 35,
             ..Default::default()
         },
     );

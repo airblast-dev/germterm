@@ -26,7 +26,6 @@ fn main() -> io::Result<()> {
 
     'update_loop: loop {
         start_frame(&mut engine);
-        fill_screen(&mut layer, Color::BLACK);
 
         for event in poll_input() {
             match event {

@@ -19,7 +19,8 @@ pub const TERM_ROWS: u16 = 24;
 fn main() -> io::Result<()> {
     let mut engine: Engine = Engine::new(TERM_COLS, TERM_ROWS)
         .title("octad-particles")
-        .limit_fps(240);
+        .limit_fps(240)
+        .default_blending_color(Color::new(40, 40, 40, 255));
 
     let mut main_layer = Layer::new(&mut engine, 0);
     let mut text_top_layer = Layer::new(&mut engine, 1);
@@ -27,7 +28,7 @@ fn main() -> io::Result<()> {
     init(&mut engine)?;
     'game_loop: loop {
         start_frame(&mut engine);
-        fill_screen(&mut main_layer, Color::BLACK);
+        // fill_screen(&mut main_layer, Color::BLACK);
 
         for event in poll_input() {
             if let Event::Key(KeyEvent {
