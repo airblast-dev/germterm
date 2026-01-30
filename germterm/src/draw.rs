@@ -97,9 +97,9 @@ pub(crate) mod internal {
         let row_text: String = " ".repeat(width as usize);
         let row_rich_text: RichText = RichText {
             text: Arc::new(row_text),
-            fg: None,
-            bg: None,
-            attributes: Attributes::empty(),
+            fg: Color::BLACK,
+            bg: Color::BLACK,
+            attributes: Attributes::NO_FG_COLOR & Attributes::NO_BG_COLOR,
         };
 
         for row in 0..height {

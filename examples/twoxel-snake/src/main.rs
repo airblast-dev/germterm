@@ -144,7 +144,7 @@ fn main() -> io::Result<()> {
             draw_octad(&mut layer_2, x, y, bg_decoration_color);
         };
 
-        // --- horizontal borders ---
+        // --- Horizontal borders ---
         for (dx, top, bottom, n) in [
             (1.5, 0.99, (TERM_ROWS - 1) as f32, TERM_COLS - 3),
             (1.0, 0.50, TERM_ROWS as f32 - 0.75, TERM_COLS - 2),
@@ -156,7 +156,7 @@ fn main() -> io::Result<()> {
             }
         }
 
-        // --- vertical borders ---
+        // --- Vertical borders ---
         for (xl, xr, offl, offr, n) in [
             (1.99, (TERM_COLS - 2) as f32, 0.99, 1.0, TERM_ROWS * 2 - 3),
             (1.0, TERM_COLS as f32 - 1.5, 0.5, 0.75, TERM_ROWS * 2 - 2),

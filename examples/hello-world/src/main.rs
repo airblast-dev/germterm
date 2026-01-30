@@ -8,7 +8,7 @@ use germterm::{
 use std::io;
 
 fn main() -> io::Result<()> {
-    let mut engine = Engine::new(40, 20).limit_fps(60);
+    let mut engine = Engine::new(40, 20).limit_fps(0);
     let mut layer = Layer::new(&mut engine, 0);
 
     init(&mut engine)?;

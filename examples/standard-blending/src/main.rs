@@ -1,5 +1,5 @@
 use germterm::{
-    color::Color,
+    color::{Color, lerp},
     crossterm::event::{Event, KeyCode, KeyEvent},
     draw::{Layer, draw_rect, draw_text, fill_screen},
     engine::{Engine, end_frame, exit_cleanup, init, start_frame},
@@ -16,7 +16,7 @@ pub const TERM_ROWS: u16 = 20;
 fn main() -> io::Result<()> {
     let mut engine: Engine = Engine::new(TERM_COLS, TERM_ROWS)
         .title("standard-blending")
-        .limit_fps(240);
+        .limit_fps(0);
 
     let mut layer = Layer::new(&mut engine, 0);
 
@@ -98,6 +98,29 @@ fn main() -> io::Result<()> {
             5,
             RichText::new("abcd")
                 .fg(Color::RED.with_alpha(127))
+                .attributes(Attributes::BOLD),
+        );
+
+        // --- Text fg blending test ---
+        let freq: f32 = 7.5;
+        let t: f32 = ((engine.game_time * freq).sin() + 1.0) * 0.5;
+        let t = t * 1.5 - 0.5;
+        let t_byte: u8 = (t * 255.0).round().clamp(0.0, 255.0) as u8;
+
+        draw_text(
+            &mut layer,
+            2,
+            8,
+            RichText::new("xxxx")
+                .fg(Color::RED)
+                .attributes(Attributes::BOLD),
+        );
+        draw_text(
+            &mut layer,
+            2,
+            8,
+            RichText::new("  oo")
+                .fg(Color::LIME.with_alpha(t_byte))
                 .attributes(Attributes::BOLD),
         );
 

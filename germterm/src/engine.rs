@@ -62,6 +62,11 @@ impl Engine {
 }
 
 pub fn init(engine: &mut Engine) -> io::Result<()> {
+    let layer_count = engine.max_layer_index + 1;
+    if engine.frame.draw_queue.len() < layer_count {
+        engine.frame.draw_queue.resize_with(layer_count, Vec::new);
+    }
+
     terminal::enable_raw_mode()?;
     execute!(
         engine.stdout,
@@ -88,12 +93,6 @@ pub fn exit_cleanup(engine: &mut Engine) -> io::Result<()> {
 pub fn start_frame(engine: &mut Engine) {
     engine.delta_time = wait_for_next_frame(&mut engine.fps_limiter);
     update_fps_counter(&mut engine.fps_counter, engine.delta_time);
-
-    // Ensure layers exist at the start of the frame
-    let layer_count = engine.max_layer_index + 1;
-    if engine.frame.draw_queue.len() < layer_count {
-        engine.frame.draw_queue.resize_with(layer_count, Vec::new);
-    }
 
     engine.frame.flat_draw_queue.clear();
 
