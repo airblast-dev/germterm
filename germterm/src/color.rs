@@ -1,5 +1,50 @@
 use std::sync::Arc;
 
+pub static BLEND_ALPHA_MULT: [[u8; 256]; 256] = {
+    let mut lut = [[0u8; 256]; 256];
+    let mut ta = 0;
+    while ta < 256 {
+        let mut ba = 0;
+        while ba < 256 {
+            // ba * (1 - ta/255) rounded
+            let ta_f = ta as f32 / 255.0;
+            let ba_f = ba as f32;
+            let result = ba_f * (1.0 - ta_f);
+            lut[ta as usize][ba as usize] = (result + 0.5) as u8;
+            ba += 1;
+        }
+        ta += 1;
+    }
+    lut
+};
+
+pub static MUL_DIV_255: [[u8; 256]; 256] = {
+    let mut lut = [[0u8; 256]; 256];
+    let mut a = 0;
+    while a < 256 {
+        let mut b = 0;
+        while b < 256 {
+            // (a * b) / 255 rounded
+            let result = (a as f32 * b as f32) / 255.0;
+            lut[a as usize][b as usize] = (result + 0.5) as u8;
+            b += 1;
+        }
+        a += 1;
+    }
+    lut
+};
+
+pub static RECIPROCAL_255_OVER_X: [u16; 256] = {
+    let mut lut = [0u16; 256];
+    let mut x = 1;
+    while x < 256 {
+        let recip = 255.0 / x as f32;
+        lut[x] = (recip * 256.0 + 0.5) as u16;
+        x += 1;
+    }
+    lut
+};
+
 pub static LERP_LUT_A: [[u8; 256]; 256] = {
     let mut lut: [[u8; 256]; 256] = [[0u8; 256]; 256];
     let mut channel_value: usize = 0;
@@ -206,19 +251,42 @@ impl ColorGradient {
 
 #[inline]
 pub fn blend_source_over(bottom: Color, top: Color) -> Color {
-    let (br, bg, bb, ba) = bottom.rgba_f32();
-    let (tr, tg, tb, ta) = top.rgba_f32();
+    let (tr, tg, tb, ta) = top.rgba();
+    let (br, bg, bb, ba) = bottom.rgba();
 
-    let out_a = ta + ba * (1.0 - ta);
-    if out_a <= 0.0 {
+    if ta == 0 {
+        return bottom;
+    }
+    if ta == 255 {
+        return top;
+    }
+
+    let alpha_mult = BLEND_ALPHA_MULT[ta as usize][ba as usize] as u16;
+    let out_a = ta as u16 + alpha_mult;
+
+    if out_a == 0 {
         return Color::CLEAR;
     }
 
-    let out_r = (tr * ta + br * ba * (1.0 - ta)) / out_a;
-    let out_g = (tg * ta + bg * ba * (1.0 - ta)) / out_a;
-    let out_b = (tb * ta + bb * ba * (1.0 - ta)) / out_a;
+    #[inline]
+    fn compute_channel(tc: u8, bc: u8, ta: u8, alpha_mult: u16, out_a: u16) -> u8 {
+        // numerator = tc * ta + bc * alpha_mult
+        let tc_ta = MUL_DIV_255[tc as usize][ta as usize] as u16 * 255;
+        let bc_alpha = MUL_DIV_255[bc as usize][alpha_mult as usize] as u16 * 255;
+        let numerator = tc_ta + bc_alpha;
 
-    Color::from_f32(out_r, out_g, out_b, out_a)
+        // out_c = (numerator * 255) / out_a
+        let recip = RECIPROCAL_255_OVER_X[out_a as usize] as u32;
+        let result = ((numerator as u32 * recip) + (1 << 7)) >> 8;
+
+        (result >> 8) as u8
+    }
+
+    let out_r = compute_channel(tr, br, ta, alpha_mult, out_a);
+    let out_g = compute_channel(tg, bg, ta, alpha_mult, out_a);
+    let out_b = compute_channel(tb, bb, ta, alpha_mult, out_a);
+
+    Color::new(out_r, out_g, out_b, out_a as u8)
 }
 
 pub fn sample_gradient(gradient: &ColorGradient, t: f32) -> Color {
