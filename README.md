@@ -1,21 +1,4 @@
-<div style="display: flex; align-items: center; justify-content: center; gap: 0;">
-  <!-- Left element -->
-  <div style="flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-    <img src="https://github.com/thehuglet/germterm/blob/main/assets/octad-particles-preview.gif" style="width: 100%; display: block;">
-  </div>
-
-  <!-- Middle element -->
-  <div style="flex: 1.2; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-    <img src="https://github.com/thehuglet/germterm/blob/main/assets/logo-middle.png" style="width: 100%; display: block;">
-  </div>
-
-  <!-- Right element -->
-  <div style="flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-    <img src="https://github.com/thehuglet/germterm/blob/main/assets/twoxel-snake-preview.gif" style="width: 100%; display: block;">
-  </div>
-</div>
-
-&nbsp;
+<img src="https://github.com/thehuglet/germterm/blob/main/assets/octad-particles-preview.gif" width="33%"> <img src="https://github.com/thehuglet/germterm/blob/main/assets/logo-middle.png" width="33%"> <img src="https://github.com/thehuglet/germterm/blob/main/assets/twoxel-snake-preview.gif" width="33%">
 
 <div align="center">
 
