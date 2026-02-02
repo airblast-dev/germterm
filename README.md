@@ -1,4 +1,4 @@
-<img src="https://github.com/thehuglet/germterm/blob/main/assets/octad-particles-preview.gif" width="32%"> <img src="https://github.com/thehuglet/germterm/blob/main/assets/logo-middle.png" width="32%"> <img src="https://github.com/thehuglet/germterm/blob/main/assets/twoxel-snake-preview.gif" width="32%">
+<img src="https://raw.githubusercontent.com/thehuglet/germterm/refs/heads/main/assets/octad-particles-preview.gif" width="32%"> <img src="https://raw.githubusercontent.com/thehuglet/germterm/refs/heads/main/assets/logo-middle.png" width="32%"> <img src="https://raw.githubusercontent.com/thehuglet/germterm/refs/heads/main/assets/twoxel-snake-preview.gif" width="32%">
 
 <div align="center">
 
