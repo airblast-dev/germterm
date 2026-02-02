@@ -1,3 +1,27 @@
+//! Color types and helpers.
+//!
+//! This module provides `u32`-packed [`Color`] and [`ColorRgb`] types, as well as
+//! gradient support along with sampling and LUT-based linear interpolation.
+//!
+//!
+//! ## Colors
+//!
+//! - [`Color`] stores RGBA in a single `u32` (`0xRRGGBBAA`).
+//! - [`ColorRgb`] stores RGB without alpha (`0xRRGGBB00`).
+//!
+//! The library is built with alpha blending support as one of it's core features,
+//! which is why [`Color`] sees considerably more use compared to [`ColorRgb`].
+//!
+//! ## Gradients
+//!
+//! - [`GradientStop`] represents a single stop in a color gradient.
+//! - [`ColorGradient`] stores a sequence of stops and can be sampled along
+//!   a normalized `0.0..=1.0` range using [`sample_gradient`].
+//!
+//! ## Interpolation
+//!
+//! - [`lerp`] allows fast linear interpolation between two [`Color`]s.
+
 use std::sync::Arc;
 
 pub static BLEND_ALPHA_MULT: [[u8; 256]; 256] = {
@@ -79,14 +103,13 @@ pub static LERP_LUT_B: [[u8; 256]; 256] = {
     lut
 };
 
-/// A packed RGBA color stored as a single `u32`.
+/// A packed RGBA color stored in an `u32`.
 ///
-/// Layout:
-/// `0xRR_GG_BB_AA`
+/// Layout: `0xRR_GG_BB_AA`
 ///
 /// # Examples
 ///
-/// ```
+/// ```rust
 /// use germterm::color::Color;
 ///
 /// let color = Color::new(255, 0, 0, 255);
@@ -173,6 +196,12 @@ impl Color {
     }
 }
 
+/// A packed RGB color stored in an `u32`.
+///
+/// Layout: `0xRR_GG_BB_00`
+///
+/// This struct is intended to be used in cases
+/// where the alpha channel is not applicable.
 pub struct ColorRgb(u32);
 
 impl ColorRgb {
@@ -218,6 +247,11 @@ impl From<ColorRgb> for Color {
     }
 }
 
+/// A single stop in a [`ColorGradient`].
+///
+/// Each stop specifies a position `t` in the normalized range `0.0..=1.0`
+/// and a [`Color`] at that position. Gradients are created by interpolating
+/// between multiple stops.
 #[derive(Clone)]
 pub struct GradientStop {
     pub t: f32,
@@ -225,21 +259,43 @@ pub struct GradientStop {
 }
 
 impl GradientStop {
+    /// Creates a new gradient stop.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// # use germterm::color::{GradientStop, Color};
+    /// let stop = GradientStop::new(0.5, Color::RED);
+    /// ```
     pub fn new(t: f32, color: Color) -> Self {
         GradientStop { t, color }
     }
 }
 
+/// A simple n-color gradient.
+///
+/// Stores a sequence of color stops [`GradientStop`] that can be sampled
+/// along a normalized range `t` (0.0..=1.0) to produce interpolated colors.
+///
+/// Construct a `ColorGradient` via [`ColorGradient::new`] and sample colors
+/// using [`sample_gradient`] or other helper functions.
+///
+/// The gradient is internally reference-counted [`Arc`] so it can be
+/// cheaply cloned and shared.
 #[derive(Clone)]
 pub struct ColorGradient {
     pub stops: Arc<Vec<GradientStop>>,
 }
 
 impl ColorGradient {
-    /// # SAFETY
-    /// - There must be at least 1 stop.
-    /// - `stops` must be in the intended visual order.
-    /// - `t` should be in 0.0..=1.0.
+    /// Creates a new color gradient from a vec or slice of [`GradientStop`]s.
+    ///
+    /// # Panics
+    /// - If `stops` is empty.
+    ///
+    /// # Notes
+    /// - `stops` should be in their intended visual order for the gradient to behave as expected.
+    /// - When evaluating the gradient, `t` values are expected to be within `0.0..=1.0`.
     pub fn new(stops: Vec<GradientStop>) -> Self {
         assert!(!stops.is_empty(), "Gradient must have at least 1 stop");
 
@@ -249,8 +305,75 @@ impl ColorGradient {
     }
 }
 
+/// Samples a color from a `ColorGradient` at a normalized position `t`.
+///
+/// `t` should be in the range `0.0..=1.0`. Values outside this range are clamped.
+///
+/// # Example
+///
+/// ```rust,no_run
+/// # use germterm::color::{ColorGradient, GradientStop, Color, sample_gradient};
+/// let gradient = ColorGradient::new(vec![
+///     GradientStop::new(0.0, Color::RED),
+///     GradientStop::new(1.0, Color::BLUE),
+/// ]);
+/// let color = sample_gradient(&gradient, 0.75);
+/// ```
 #[inline]
-pub fn blend_source_over(bottom: Color, top: Color) -> Color {
+pub fn sample_gradient(gradient: &ColorGradient, t: f32) -> Color {
+    let t = t.clamp(0.0, 1.0);
+
+    if gradient.stops.len() == 1 {
+        return gradient.stops[0].color;
+    }
+
+    for window in gradient.stops.windows(2) {
+        let a = &window[0];
+        let b = &window[1];
+
+        if t >= a.t && t <= b.t {
+            let local_t = (t - a.t) / (b.t - a.t);
+            return lerp(a.color, b.color, local_t);
+        }
+    }
+
+    gradient.stops.last().unwrap().color
+}
+
+/// Linearly interpolates between two [`Color`]s.
+///
+/// Computes a color between `a` and `b` using the parameter `t`,
+/// where `t = 0.0` returns `a` and `t = 1.0` returns `b`.
+///
+/// Values outside `0.0..=1.0` are clamped to this range.
+///
+/// # Example
+///
+/// ```rust,no_run
+/// # use germterm::color::{Color, lerp};
+/// let purple = lerp(Color::RED, Color::BLUE, 0.5);
+/// ```
+pub fn lerp(a: Color, b: Color, t: f32) -> Color {
+    let clamped_t: f32 = t.clamp(0.0, 1.0);
+    let t_scaled: u8 = (clamped_t * 255.0).round() as u8;
+
+    let (a_r, a_g, a_b, a_a) = a.rgba();
+    let (b_r, b_g, b_b, b_a) = b.rgba();
+
+    let out_r: u8 =
+        LERP_LUT_A[a_r as usize][t_scaled as usize] + LERP_LUT_B[b_r as usize][t_scaled as usize];
+    let out_g: u8 =
+        LERP_LUT_A[a_g as usize][t_scaled as usize] + LERP_LUT_B[b_g as usize][t_scaled as usize];
+    let out_b: u8 =
+        LERP_LUT_A[a_b as usize][t_scaled as usize] + LERP_LUT_B[b_b as usize][t_scaled as usize];
+    let out_a: u8 =
+        LERP_LUT_A[a_a as usize][t_scaled as usize] + LERP_LUT_B[b_a as usize][t_scaled as usize];
+
+    Color::new(out_r, out_g, out_b, out_a)
+}
+
+#[inline]
+pub(crate) fn blend_source_over(bottom: Color, top: Color) -> Color {
     let (tr, tg, tb, ta) = top.rgba();
     let (br, bg, bb, ba) = bottom.rgba();
 
@@ -287,45 +410,4 @@ pub fn blend_source_over(bottom: Color, top: Color) -> Color {
     let out_b = compute_channel(tb, bb, ta, alpha_mult, out_a);
 
     Color::new(out_r, out_g, out_b, out_a as u8)
-}
-
-pub fn sample_gradient(gradient: &ColorGradient, t: f32) -> Color {
-    let t = t.clamp(0.0, 1.0);
-
-    if gradient.stops.len() == 1 {
-        return gradient.stops[0].color;
-    }
-
-    for window in gradient.stops.windows(2) {
-        let a = &window[0];
-        let b = &window[1];
-
-        if t >= a.t && t <= b.t {
-            let local_t = (t - a.t) / (b.t - a.t);
-            return lerp(a.color, b.color, local_t);
-        }
-    }
-
-    // # SAFETY
-    // `ColorGradient::new` requires at least 1 stop to be present
-    gradient.stops.last().unwrap().color
-}
-
-pub fn lerp(color_a: Color, color_b: Color, t: f32) -> Color {
-    let clamped_t: f32 = t.clamp(0.0, 1.0);
-    let t_scaled: u8 = (clamped_t * 255.0).round() as u8;
-
-    let (a_r, a_g, a_b, a_a) = color_a.rgba();
-    let (b_r, b_g, b_b, b_a) = color_b.rgba();
-
-    let out_r: u8 =
-        LERP_LUT_A[a_r as usize][t_scaled as usize] + LERP_LUT_B[b_r as usize][t_scaled as usize];
-    let out_g: u8 =
-        LERP_LUT_A[a_g as usize][t_scaled as usize] + LERP_LUT_B[b_g as usize][t_scaled as usize];
-    let out_b: u8 =
-        LERP_LUT_A[a_b as usize][t_scaled as usize] + LERP_LUT_B[b_b as usize][t_scaled as usize];
-    let out_a: u8 =
-        LERP_LUT_A[a_a as usize][t_scaled as usize] + LERP_LUT_B[b_a as usize][t_scaled as usize];
-
-    Color::new(out_r, out_g, out_b, out_a)
 }

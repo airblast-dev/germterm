@@ -1,40 +1,36 @@
+use crate::{
+    color::{Color, blend_source_over},
+    rich_text::{Attributes, RichText},
+};
+use crossterm::{cursor as ctcursor, queue, style as ctstyle};
 use std::{
     io::{self, Stdout, Write},
     ops::{Deref, DerefMut},
     str::Chars,
 };
 
-use bitflags::Flags;
-use crossterm::{cursor as ctcursor, queue, style as ctstyle};
-
-use crate::{
-    color::{Color, blend_source_over, lerp},
-    draw::internal::fill_screen,
-    rich_text::{Attributes, RichText},
-};
-
 #[derive(Clone)]
-pub struct DrawCall {
+pub(crate) struct DrawCall {
     pub rich_text: RichText,
     pub x: i16,
     pub y: i16,
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
-pub struct Cell {
-    pub ch: char,               // 4 bytes
-    pub fg: Color,              // 4 bytes (u32)
-    pub bg: Color,              // 4 bytes (u32)
-    pub attributes: Attributes, // 1 byte  (u8)
+pub(crate) struct Cell {
+    pub ch: char,
+    pub fg: Color,
+    pub bg: Color,
+    pub attributes: Attributes,
 }
 
-pub struct DiffProduct {
+pub(crate) struct DiffProduct {
     pub cell: Cell,
     pub x: u16,
     pub y: u16,
 }
 
-pub struct FrameBuffer(pub Vec<Cell>);
+pub(crate) struct FrameBuffer(pub Vec<Cell>);
 
 impl Deref for FrameBuffer {
     type Target = [Cell];
@@ -87,7 +83,7 @@ impl Frame {
     }
 }
 
-pub fn compose_frame_buffer(
+pub(crate) fn compose_frame_buffer(
     buffer: &mut FrameBuffer,
     draw_queue: &[DrawCall],
     cols: u16,
@@ -138,7 +134,7 @@ pub fn compose_frame_buffer(
     }
 }
 
-pub fn diff_frame_buffers(
+pub(crate) fn diff_frame_buffers(
     diff_products: &mut Vec<DiffProduct>,
     current_frame_buffer: &FrameBuffer,
     old_frame_buffer: &FrameBuffer,
@@ -170,7 +166,7 @@ pub fn diff_frame_buffers(
     }
 }
 
-pub fn build_crossterm_content_style(cell: &Cell) -> crossterm::style::ContentStyle {
+pub(crate) fn build_crossterm_content_style(cell: &Cell) -> crossterm::style::ContentStyle {
     use crossterm::style as ctstyle;
 
     let fg_color: Option<ctstyle::Color> = if cell.fg == Color::NO_COLOR {

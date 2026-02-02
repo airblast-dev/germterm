@@ -1,13 +1,11 @@
 use germterm::{
-    color::{Color, ColorRgb, lerp},
+    color::Color,
     crossterm::event::{Event, KeyCode, KeyEvent},
-    draw::{Layer, draw_rect, draw_text, fill_screen},
+    draw::{Layer, draw_fps_counter, draw_rect, draw_text},
     engine::{Engine, end_frame, exit_cleanup, init, start_frame},
-    fps_counter::draw_fps_counter,
     input::poll_input,
     rich_text::{Attributes, RichText},
 };
-
 use std::io;
 
 pub const TERM_COLS: u16 = 40;

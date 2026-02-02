@@ -1,8 +1,7 @@
 use germterm::{
     crossterm::event::{Event, KeyCode, KeyEvent},
-    draw::{Layer, draw_text},
+    draw::{Layer, draw_fps_counter, draw_text},
     engine::{Engine, end_frame, exit_cleanup, init, start_frame},
-    fps_counter::draw_fps_counter,
     input::poll_input,
 };
 use std::io;

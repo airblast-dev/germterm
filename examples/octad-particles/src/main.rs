@@ -1,16 +1,15 @@
 use germterm::{
     color::{Color, ColorGradient, GradientStop},
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind},
-    draw::{Layer, draw_text, fill_screen},
-    engine::{Engine, end_frame, exit_cleanup, init, override_default_blending_color, start_frame},
-    fps_counter::draw_fps_counter,
+    draw::{Layer, draw_fps_counter, draw_text},
+    engine::{Engine, end_frame, exit_cleanup, init, start_frame},
     input::poll_input,
     particle::{
         ParticleColor, ParticleEmitter, ParticleEmitterShape, ParticleSpec, spawn_particles,
     },
+    rich_text::{Attributes, RichText},
 };
 use rand::{Rng, rngs::ThreadRng};
-
 use std::io;
 
 pub const TERM_COLS: u16 = 80;
@@ -79,7 +78,9 @@ fn main() -> io::Result<()> {
             &mut text_top_layer,
             26,
             (TERM_ROWS / 2) as i16,
-            "Press W to spawn particles!",
+            RichText::new("Press W to spawn particles!")
+                .fg(Color::WHITE.with_alpha(100))
+                .attributes(Attributes::BOLD),
         );
 
         draw_fps_counter(&mut text_top_layer, 0, 0);

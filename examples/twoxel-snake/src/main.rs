@@ -3,6 +3,7 @@ use germterm::{
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind},
     draw::{Layer, draw_octad, draw_text, draw_twoxel},
     engine::{Engine, end_frame, exit_cleanup, init, start_frame},
+    fps_counter::get_fps,
     input::poll_input,
     particle::{ParticleColor, ParticleEmitter, ParticleSpec, spawn_particles},
     rich_text::{Attributes, RichText},
@@ -95,8 +96,6 @@ fn main() -> io::Result<()> {
         }
 
         start_frame(&mut engine);
-        // fill_screen(&mut layer_1, Color(0x1E_1E_2E_FF));
-
         if matches!(game_state, GameState::Playing) {
             move_timer += engine.delta_time;
             let step_time: f32 = 1.0 / movement_speed;
@@ -188,7 +187,7 @@ fn main() -> io::Result<()> {
         }
 
         // --- FPS Counter
-        let fps_text: String = format!("UNCAPPED FPS: {:2.0}", engine.fps_counter.fps_ema);
+        let fps_text: String = format!("UNCAPPED FPS: {:2.0}", get_fps(&engine));
         draw_text(
             &mut layer_1,
             10,

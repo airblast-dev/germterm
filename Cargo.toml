@@ -9,6 +9,7 @@ members = [
     "examples/twoxel-tester",
     "examples/twoxel-snake",
     "examples/particle-benchmark",
+    "examples/erase-contents",
 ]
 
 [workspace.package]

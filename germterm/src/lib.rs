@@ -1,3 +1,7 @@
+#![doc = include_str!("../../README.md")]
+
+pub use crossterm;
+
 pub mod color;
 pub mod draw;
 pub mod engine;
@@ -7,6 +11,3 @@ mod frame;
 pub mod input;
 pub mod particle;
 pub mod rich_text;
-
-// Re-exports
-pub use crossterm;

@@ -1,3 +1,15 @@
+//! Octad-based particle system.
+//!
+//! This module provides a way of spawning particles using the [`spawn_particles`] function.
+//! Particles are automatically updated and drawn at the end of the frame.
+//!
+//! The particles and their behaviors can be customized using [`ParticleSpec`] and [`ParticleEmitter`].
+//! The system uses approximated velocity, gravity and drag calculations.
+//!
+//! ## Notes
+//! Particles are always drawn at the end of the frame. This means they'll always be drawn last on the specified layer.
+//! If you wish to spawn particles underneath other drawn elements, you can create a new layer with a lower index and draw to it.
+
 use std::{f32::consts::PI, ops::RangeInclusive};
 
 use rand::{Rng, rngs::ThreadRng};
@@ -23,7 +35,7 @@ pub enum ParticleColor {
     Gradient(ColorGradient),
 }
 
-pub struct ParticleState {
+pub(crate) struct ParticleState {
     pos: (f32, f32),
     velocity: (f32, f32),
     color: ParticleColor,
@@ -34,7 +46,7 @@ pub struct ParticleState {
 }
 
 pub struct ParticleSpec {
-    // TODO: Make this also support a weighted set of colors and possibly gradients
+    // TODO: Make this also support a weighted set of colors
     pub color: ParticleColor,
     pub speed: RangeInclusive<f32>,
     pub lifetime_sec: f32,
@@ -66,47 +78,20 @@ impl Default for ParticleEmitter {
     }
 }
 
-pub(crate) fn update_and_draw_particles(engine: &mut Engine) {
-    let gravity: f32 = 200.0;
-    let drag: f32 = 3.0;
-    let drag_decay: f32 = 1.0 / (1.0 + drag * engine.delta_time);
-    // y:x aspect ratio to account for terminal cells not being perfect squares
-    // and not making the end result look stretched out vertically
-    let aspect_ratio: f32 = 1.0 / 2.0;
-
-    let mut i: usize = 0;
-    while i < engine.particle_state.len() {
-        let state: &mut ParticleState = &mut engine.particle_state[i];
-
-        if engine.game_time >= state.death_timestamp {
-            engine.particle_state.swap_remove(i);
-            continue;
-        }
-
-        let t: f32 = ((engine.game_time - state.spawn_timestamp)
-            / (state.death_timestamp - state.spawn_timestamp))
-            .clamp(0.0, 1.0);
-
-        let color: Color = match &state.color {
-            ParticleColor::Solid(color) => *color,
-            ParticleColor::Gradient(color_gradient) => sample_gradient(color_gradient, t),
-        };
-
-        state.velocity.1 += gravity * state.gravity_scale * engine.delta_time;
-
-        state.velocity.0 *= drag_decay;
-        state.velocity.1 *= drag_decay;
-
-        state.pos.0 += state.velocity.0 * engine.delta_time;
-        state.pos.1 += state.velocity.1 * engine.delta_time * aspect_ratio;
-
-        let draw_queue: &mut Vec<DrawCall> = &mut engine.frame.layered_draw_queue[state.layer.index];
-        internal::draw_octad(draw_queue, state.pos.0, state.pos.1, color);
-
-        i += 1;
-    }
-}
-
+/// Spawns particles once at a position with specified parameters.
+///
+/// Particles can be customized by tinkering with the `spec` and `emitter` parameters.
+///
+/// # Examples
+/// ```rust,no_run
+/// # use germterm::{draw::Layer, engine::Engine, particle::{spawn_particles, ParticleSpec, ParticleEmitter}};
+/// let mut engine = Engine::new(40, 20);
+/// let mut layer = Layer::new(&mut engine, 0);
+///
+/// let spec = ParticleSpec::default();
+/// let emitter = ParticleEmitter::default();
+/// spawn_particles(&mut layer, 20.0, 10.0, &spec, &emitter);
+/// ```
 pub fn spawn_particles(
     layer: &mut Layer,
     x: f32,
@@ -166,7 +151,50 @@ pub fn spawn_particles(
     }
 }
 
+/// Tiny debug helper that displays the alive particle count.
 #[inline]
 pub fn particle_count(engine: &Engine) -> usize {
     engine.particle_state.len()
+}
+
+pub(crate) fn update_and_draw_particles(engine: &mut Engine) {
+    let gravity: f32 = 200.0;
+    let drag: f32 = 3.0;
+    let drag_decay: f32 = 1.0 / (1.0 + drag * engine.delta_time);
+    // y:x aspect ratio to account for terminal cells not being perfect squares
+    // and not making the end result look stretched out vertically
+    let aspect_ratio: f32 = 1.0 / 2.0;
+
+    let mut i: usize = 0;
+    while i < engine.particle_state.len() {
+        let state: &mut ParticleState = &mut engine.particle_state[i];
+
+        if engine.game_time >= state.death_timestamp {
+            engine.particle_state.swap_remove(i);
+            continue;
+        }
+
+        let t: f32 = ((engine.game_time - state.spawn_timestamp)
+            / (state.death_timestamp - state.spawn_timestamp))
+            .clamp(0.0, 1.0);
+
+        let color: Color = match &state.color {
+            ParticleColor::Solid(color) => *color,
+            ParticleColor::Gradient(color_gradient) => sample_gradient(color_gradient, t),
+        };
+
+        state.velocity.1 += gravity * state.gravity_scale * engine.delta_time;
+
+        state.velocity.0 *= drag_decay;
+        state.velocity.1 *= drag_decay;
+
+        state.pos.0 += state.velocity.0 * engine.delta_time;
+        state.pos.1 += state.velocity.1 * engine.delta_time * aspect_ratio;
+
+        let draw_queue: &mut Vec<DrawCall> =
+            &mut engine.frame.layered_draw_queue[state.layer.index];
+        internal::draw_octad(draw_queue, state.pos.0, state.pos.1, color);
+
+        i += 1;
+    }
 }

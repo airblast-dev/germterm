@@ -1,10 +1,9 @@
-use crate::{
-    draw::{Layer, draw_text},
-    engine::Engine,
-};
+//! General FPS metrics.
 
-pub struct FpsCounter {
-    pub fps_ema: f32,
+use crate::engine::Engine;
+
+pub(crate) struct FpsCounter {
+    fps_ema: f32,
     smoothing_factor: f32,
 }
 
@@ -17,7 +16,7 @@ impl FpsCounter {
     }
 }
 
-pub fn update_fps_counter(fps_counter: &mut FpsCounter, delta_time: f32) {
+pub(crate) fn update_fps_counter(fps_counter: &mut FpsCounter, delta_time: f32) {
     if delta_time <= 0.0 {
         return;
     }
@@ -32,12 +31,14 @@ pub fn update_fps_counter(fps_counter: &mut FpsCounter, delta_time: f32) {
     }
 }
 
-pub fn draw_fps_counter(layer: &mut Layer, x: i16, y: i16) {
-    let engine: &mut Engine = unsafe { &mut *layer.engine_ptr };
-    draw_text(
-        layer,
-        x,
-        y,
-        format!("FPS: {:2.0}", engine.fps_counter.fps_ema),
-    );
+/// Retrieves the current FPS EMA (Exponential Moving Average).
+///
+/// # Example
+/// ```rust,no_run
+/// # use germterm::{fps_counter::get_fps, engine::Engine};
+/// let mut engine = Engine::new(40, 20);
+/// let fps = get_fps(&engine);
+/// ```
+pub fn get_fps(engine: &Engine) -> f32 {
+    engine.fps_counter.fps_ema
 }
