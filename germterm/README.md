@@ -4,6 +4,7 @@
 
 [![Rust](https://img.shields.io/badge/Rust-gray?logo=rust&logoColor=orange)](https://www.rust-lang.org/)
 [![Crate](https://img.shields.io/crates/v/germterm?logo=rust&color=orange)](https://crates.io/crates/germterm/)
+[![Docs](https://img.shields.io/docsrs/germterm)](https://docs.rs/germterm)
 [![License](https://img.shields.io/badge/license-MIT-blue)](https://mit-license.org/)
 [![Build status](https://img.shields.io/github/actions/workflow/status/thehuglet/germterm/.github%2Fworkflows%2Frelease.yml)](https://github.com/thehuglet/germterm/actions)
 
