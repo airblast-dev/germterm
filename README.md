@@ -30,7 +30,10 @@ It renders in real time, adds support for the alpha channel, adds multiple drawi
 
 ## Getting started
 
-See the [examples](https://github.com/thehuglet/germterm/tree/main/examples) directory for more advanced examples.
+Add `germterm` as a dependency:
+```
+cargo add germterm
+```
 
 ```rust,no_run
 use germterm::{
@@ -77,3 +80,5 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 ```
+
+See the [examples](https://github.com/thehuglet/germterm/tree/main/examples) directory for more advanced examples.
