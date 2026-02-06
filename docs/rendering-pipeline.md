@@ -14,6 +14,8 @@ flowchart TD
 
 ## Reusing structures to avoid allocations
 
+After the drawing phase, the pipeline performs zero allocations.
+
 To avoid allocating on every frame, we only allocate data structures once and reuse them between frames. This requires additional bookkeeping to ensure unwanted state from the previous frame does not overflow into the current frame, but results in a sizeable performance boost when done correctly.
 
 The following data structures are reused by the rendering pipeline:
