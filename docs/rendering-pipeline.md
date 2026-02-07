@@ -4,8 +4,7 @@
 flowchart TD
     engine_init["Engine init"] --> frame_setup
     frame_setup["Frame setup"] --> drawing_phase
-    drawing_phase["Drawing phase (draw_text, draw_rect, etc.)"] -->|"Begin rendering pipeline"| flatten_layers
-    flatten_layers["Flatten DrawCalls into a single Vec retaining layer order"] --> compose_frame_buffer
+    drawing_phase["Drawing phase (draw_text, draw_rect, etc.)"] -->|"Begin rendering pipeline"| compose_frame_buffer
     compose_frame_buffer["compose_frame_buffer()"] --> diff_frame_buffers
     diff_frame_buffers["diff_frame_buffers()"] --> draw_to_terminal
     draw_to_terminal["draw_to_terminal()"] --> store_frame_buffer_for_next_frame
@@ -21,9 +20,7 @@ To avoid allocating on every frame, we only allocate data structures once and re
 The following data structures are reused by the rendering pipeline:
 
 - `engine.frame.layered_draw_queue`
-- `engine.frame.flat_draw_queue`
 - `engine.frame.current_frame_buffer`
-- `engine.frame.diff_products`
 
 ## Layers
 
@@ -36,7 +33,7 @@ All layers are stored inside a `Vec` (`engine.frame.layered_draw_queue`). This g
 There are 2 reasons behind this choice, both tied to performance.
 
 - **O(1) access** - As explained in [Drawing functions](#drawing-functions), `DrawCall`s are pushed to a specified layer, which first requires accessing it. `Vec` excels here in terms of performance with O(1) access. The only downside is ensuring the layer exists.
-- **Fast iteration** - A `Vec<Vec<DrawCall>>` can be efficiently flattened into a single layer (`Vec<DrawCall>`). I found that in real life scenarios, iterating the flat `Vec` here significantly increased performance, likely due to improved cache locality, which allows more predictable iteration for the optimizer
+- **Fast iteration** - A Vec<Vec<DrawCall>> can be efficiently flattened into an iterator using `flat_map`.
 
 ## Drawing functions
 
@@ -60,7 +57,7 @@ Every case that we account for can be found in the `frame::compose_cell` functio
 
 ## Diffing frame buffers
 
-Diffing the previous and current frame buffer allows us to both avoid flickering and increase performance substantially, by only drawing the contents that changed from the previous frame. The diffing step writes to `engine.frame.diff_products` (`Vec<DiffProduct>`), each `DiffProduct` contains a `Cell` and it's position on screen.
+Diffing the previous and current frame buffer allows us to both avoid flickering and increase performance substantially by only drawing the contents that changed from the previous frame. This step returns an iterator over `DiffProduct`, which contains a `Cell` and the position on screen.
 
 ## Justifying the `Color::NO_COLOR` sentinel over `Option<Color>`
 
