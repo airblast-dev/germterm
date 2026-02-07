@@ -145,7 +145,11 @@ pub fn end_frame(engine: &mut Engine) -> io::Result<()> {
 
     compose_frame_buffer(
         &mut engine.frame.current_frame_buffer,
-        engine.frame.layered_draw_queue.iter_mut().flat_map(|v| v.drain(..)),
+        engine
+            .frame
+            .layered_draw_queue
+            .iter_mut()
+            .flat_map(|v| v.drain(..)),
         engine.frame.cols,
         engine.frame.rows,
         engine.default_blending_color,
