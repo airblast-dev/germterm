@@ -1,6 +1,6 @@
 //! Stylized text.
 
-use crate::{color::Color, metadata::Metadata};
+use crate::{cell::CellFormat, color::Color};
 use bitflags::bitflags;
 use std::sync::Arc;
 
@@ -12,6 +12,8 @@ bitflags! {
         const ITALIC        = 0b_00000010;
         const UNDERLINED    = 0b_00000100;
         const HIDDEN        = 0b_00001000;
+        const NO_FG_COLOR   = 0b_00010000;
+        const NO_BG_COLOR   = 0b_00100000;
     }
 }
 
@@ -29,7 +31,7 @@ pub struct RichText {
     pub fg: Color,
     pub bg: Color,
     pub attributes: Attributes,
-    pub(crate) metadata: Metadata,
+    pub(crate) cell_format: CellFormat,
 }
 
 impl RichText {
@@ -48,7 +50,7 @@ impl RichText {
             fg: Color::WHITE,
             bg: Color::CLEAR,
             attributes: Attributes::empty(),
-            metadata: Metadata::empty(),
+            cell_format: CellFormat::Standard,
         }
     }
 
@@ -71,8 +73,8 @@ impl RichText {
     }
 
     #[inline]
-    pub(crate) fn with_metadata(mut self, metadata: Metadata) -> Self {
-        self.metadata = metadata;
+    pub(crate) fn with_cell_format(mut self, format: CellFormat) -> Self {
+        self.cell_format = format;
         self
     }
 }

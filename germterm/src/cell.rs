@@ -1,4 +1,12 @@
-use crate::{color::Color, metadata::Metadata, rich_text::Attributes};
+use crate::{color::Color, rich_text::Attributes};
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum CellFormat {
+    Standard,
+    Twoxel,
+    Octad,
+    Blocktad,
+}
 
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub struct Cell {
@@ -6,7 +14,7 @@ pub struct Cell {
     pub fg: Color,
     pub bg: Color,
     pub attributes: Attributes,
-    pub(crate) metadata: Metadata,
+    pub format: CellFormat,
 }
 
 impl Cell {
@@ -15,6 +23,6 @@ impl Cell {
         fg: Color::BLACK,
         bg: Color::BLACK,
         attributes: Attributes::empty(),
-        metadata: Metadata::empty(),
+        format: CellFormat::Standard,
     };
 }

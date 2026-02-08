@@ -1,8 +1,7 @@
 use crate::{
-    cell::Cell,
+    cell::{Cell, CellFormat},
     color::{Color, blend_source_over},
     draw::BLOCKTAD_CHAR_LUT,
-    metadata::{CellFormat, Metadata},
     rich_text::{Attributes, RichText},
 };
 use crossterm::{cursor as ctcursor, queue, style as ctstyle};
@@ -167,7 +166,7 @@ pub(crate) fn compose_frame_buffer(
                 fg: draw_call.rich_text.fg,
                 bg: draw_call.rich_text.bg,
                 attributes: draw_call.rich_text.attributes,
-                metadata: draw_call.rich_text.metadata,
+                format: draw_call.rich_text.cell_format,
             };
 
             buffer[cell_index] = compose_cell(old_cell, new_cell, default_blending_color);
@@ -178,7 +177,7 @@ pub(crate) fn compose_frame_buffer(
 pub(crate) fn build_crossterm_content_style(cell: &Cell) -> crossterm::style::ContentStyle {
     use crossterm::style as ctstyle;
 
-    let fg_color: Option<ctstyle::Color> = if cell.metadata.no_fg_color() {
+    let fg_color: Option<ctstyle::Color> = if cell.attributes.contains(Attributes::NO_FG_COLOR) {
         None
     } else {
         Some(ctstyle::Color::Rgb {
@@ -188,7 +187,7 @@ pub(crate) fn build_crossterm_content_style(cell: &Cell) -> crossterm::style::Co
         })
     };
 
-    let bg_color: Option<ctstyle::Color> = if cell.metadata.no_bg_color() {
+    let bg_color: Option<ctstyle::Color> = if cell.attributes.contains(Attributes::NO_BG_COLOR) {
         None
     } else {
         Some(ctstyle::Color::Rgb {
@@ -252,19 +251,16 @@ fn compose_cell(old: Cell, new: Cell, default_blending_color: Color) -> Cell {
     let both_ch_equal: bool = old.ch == new.ch;
 
     // Cell format related
-    let new_cell_format: CellFormat = new.metadata.cell_format();
-    let old_cell_format: CellFormat = old.metadata.cell_format();
+    let new_twoxel: bool = new.format == CellFormat::Twoxel;
+    let new_octad: bool = new.format == CellFormat::Octad;
+    let new_blocktad: bool = new.format == CellFormat::Blocktad;
 
-    let new_twoxel: bool = new_cell_format == CellFormat::Twoxel;
-    let new_octad: bool = new_cell_format == CellFormat::Octad;
-    let new_blocktad: bool = new_cell_format == CellFormat::Blocktad;
-
-    let old_twoxel: bool = old_cell_format == CellFormat::Twoxel;
-    let old_octad: bool = old_cell_format == CellFormat::Octad;
-    let old_blocktad: bool = old_cell_format == CellFormat::Blocktad;
+    let old_twoxel: bool = old.format == CellFormat::Twoxel;
+    let old_octad: bool = old.format == CellFormat::Octad;
+    let old_blocktad: bool = old.format == CellFormat::Blocktad;
 
     // Foreground related
-    let new_fg_no_color: bool = new.metadata.no_fg_color();
+    let new_fg_no_color: bool = new.attributes.contains(Attributes::NO_FG_COLOR);
     let new_fg_invisible: bool = new.fg.a() == 0;
     let new_fg_opaque: bool = new.fg.a() == 255;
     let new_ch_invisible: bool = new.ch == ' ' || new_fg_invisible;
@@ -273,24 +269,21 @@ fn compose_cell(old: Cell, new: Cell, default_blending_color: Color) -> Cell {
     let old_ch_invisible: bool = old.ch == ' ' || old_fg_invisible;
 
     // Background related
-    let new_bg_no_color: bool = new.metadata.no_bg_color();
+    let new_bg_no_color: bool = new.attributes.contains(Attributes::NO_BG_COLOR);
     let new_bg_invisible: bool = new.bg.a() == 0;
     let new_bg_opaque: bool = new.bg.a() == 255;
     let new_bg_translucent: bool = !new_bg_opaque && !new_bg_invisible;
 
-    let old_bg_no_color: bool = old.metadata.no_bg_color();
+    let old_bg_no_color: bool = old.attributes.contains(Attributes::NO_BG_COLOR);
 
     if new_twoxel {
-        let mut metadata = Metadata::empty().with_cell_format(CellFormat::Twoxel);
-
-        let (ch, attributes) = if old_twoxel && !new_fg_no_color {
+        let (ch, mut attributes, format) = if old_twoxel && !new_fg_no_color {
             // Covers case:
             // - Drawing a twoxel on top of another twoxel
             //      => Keep the old char
-            metadata = metadata.with_cell_format(old_cell_format);
-            (old.ch, old.attributes)
+            (old.ch, old.attributes, old.format)
         } else {
-            (new.ch, new.attributes)
+            (new.ch, new.attributes, new.format)
         };
 
         let fg = if old_twoxel && both_ch_equal {
@@ -305,6 +298,9 @@ fn compose_cell(old: Cell, new: Cell, default_blending_color: Color) -> Cell {
             old.fg
         } else if !old_bg_no_color {
             blend_source_over(old.bg, new.fg)
+        } else if new_fg_invisible {
+            attributes.insert(Attributes::NO_FG_COLOR);
+            default_blending_color
         } else {
             blend_source_over(default_blending_color, new.fg)
         };
@@ -318,7 +314,12 @@ fn compose_cell(old: Cell, new: Cell, default_blending_color: Color) -> Cell {
             // Covers case:
             // - Drawing a twoxel on top of another twoxel (old has no bg color)
             //      => Blend the new twoxel's fg with the default blending color
-            blend_source_over(default_blending_color, new.fg)
+            if new_fg_invisible {
+                attributes.insert(Attributes::NO_BG_COLOR);
+                default_blending_color
+            } else {
+                blend_source_over(default_blending_color, new.fg)
+            }
         } else if old_twoxel {
             // Covers case:
             // - Drawing a twoxel on top of another twoxel (different half-block)
@@ -333,32 +334,29 @@ fn compose_cell(old: Cell, new: Cell, default_blending_color: Color) -> Cell {
             fg,
             bg,
             attributes,
-            metadata,
+            format,
         }
     } else {
         // This branch handles the following cell formats: [Standard, Octad, Blocktad]
 
-        let mut metadata = Metadata::empty().with_cell_format(new_cell_format);
-
-        let (ch, attributes) = if new_ch_invisible && !new_bg_opaque && !new_bg_no_color {
+        let (ch, mut attributes, format) = if new_ch_invisible && !new_bg_opaque && !new_bg_no_color
+        {
             // Covers case:
             // - An invisible character should not replace the one underneath
             //      => Keep the old character
-            //
-            metadata = metadata.with_cell_format(old_cell_format);
-            (old.ch, old.attributes)
+            (old.ch, old.attributes, old.format)
         } else if new_blocktad && old_blocktad {
             // Covers case:
             // - Drawing a blocktad on top of another blocktad
             //      => Merge the blocktad chars
-            (merge_blocktad(old.ch, new.ch), new.attributes)
+            (merge_blocktad(old.ch, new.ch), new.attributes, new.format)
         } else if new_octad && old_octad {
             // Covers case:
             // - Drawing an octad on top of another octad
             //      => Merge the octad braille chars
-            (merge_octad(old.ch, new.ch), new.attributes)
+            (merge_octad(old.ch, new.ch), new.attributes, new.format)
         } else {
-            (new.ch, new.attributes)
+            (new.ch, new.attributes, new.format)
         };
 
         let fg = if new_bg_translucent && new_fg_invisible {
@@ -370,6 +368,7 @@ fn compose_cell(old: Cell, new: Cell, default_blending_color: Color) -> Cell {
             // Covers case:
             // - Drawing an invisible char on top of a visible char
             //      => Preserve old fg as the invisible char shouldn't be covering it
+            attributes |= old.attributes & Attributes::NO_FG_COLOR;
             old.fg
         } else if !old_ch_invisible && !new_fg_opaque {
             // Covers case:
@@ -385,12 +384,22 @@ fn compose_cell(old: Cell, new: Cell, default_blending_color: Color) -> Cell {
             // Covers case:
             // - Drawing fg text with a translucent bg above a Color::NO_COLOR bg
             //      => Blend the translucent new bg with the default blending color, then blend the new fg with the result
-            blend_source_over(blend_source_over(default_blending_color, new.bg), new.fg)
+            if new_bg_invisible && new_fg_invisible {
+                attributes.insert(Attributes::NO_FG_COLOR);
+                default_blending_color
+            } else {
+                blend_source_over(blend_source_over(default_blending_color, new.bg), new.fg)
+            }
         } else if old_bg_no_color {
             // Covers case:
             // - Drawing a translucent fg char over a Color::NO_COLOR bg
             //      => Blend the new fg with the default blending color
-            blend_source_over(default_blending_color, new.fg)
+            if new_fg_invisible {
+                attributes.insert(Attributes::NO_FG_COLOR);
+                default_blending_color
+            } else {
+                blend_source_over(default_blending_color, new.fg)
+            }
         } else {
             blend_source_over(old.bg, new.fg)
         };
@@ -399,19 +408,24 @@ fn compose_cell(old: Cell, new: Cell, default_blending_color: Color) -> Cell {
             // Covers case:
             // - Drawing a Color::NO_COLOR bg
             //      => Erase the bg
-            metadata = metadata.with_no_bg_color(true);
+
             old.bg
         } else if old_bg_no_color && new_bg_invisible {
             // Covers case:
             // - Drawing a bg with an alpha of 0 over Color::NO_COLOR
             //      => Erase the bg
-            metadata = metadata.with_no_bg_color(true);
+            attributes.insert(Attributes::NO_BG_COLOR);
             old.bg
         } else if old_bg_no_color && !new_bg_opaque {
             // Covers cases:
             // - Drawing a translucent background over a Color::NO_COLOR bg
             //      => The new bg will be blended with the default blending color
-            blend_source_over(default_blending_color, new.bg)
+            if new_bg_invisible {
+                attributes.insert(Attributes::NO_BG_COLOR);
+                default_blending_color
+            } else {
+                blend_source_over(default_blending_color, new.bg)
+            }
         } else {
             blend_source_over(old.bg, new.bg)
         };
@@ -421,7 +435,7 @@ fn compose_cell(old: Cell, new: Cell, default_blending_color: Color) -> Cell {
             fg,
             bg,
             attributes,
-            metadata,
+            format,
         }
     }
 }
