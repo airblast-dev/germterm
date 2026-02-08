@@ -6,7 +6,7 @@
 
 use crate::{
     color::{Color, ColorRgb},
-    draw::{Layer, fill_screen},
+    draw::{Layer, erase_rect},
     fps_counter::{FpsCounter, update_fps_counter},
     fps_limiter::{self, FpsLimiter, wait_for_next_frame},
     frame::{Frame, compose_frame_buffer, copy_frame_buffer, diff_frame_buffers, draw_to_terminal},
@@ -132,7 +132,13 @@ pub fn start_frame(engine: &mut Engine) {
     update_fps_counter(&mut engine.fps_counter, engine.delta_time);
 
     let mut lowest_possible_layer = Layer::new(engine, 0);
-    fill_screen(&mut lowest_possible_layer, Color::NO_COLOR);
+    erase_rect(
+        &mut lowest_possible_layer,
+        0,
+        0,
+        engine.frame.cols as i16,
+        engine.frame.rows as i16,
+    );
 }
 
 /// Renders the contents to the terminal and ends the frame.

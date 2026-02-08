@@ -9,5 +9,6 @@ pub mod fps_counter;
 mod fps_limiter;
 mod frame;
 pub mod input;
+mod metadata;
 pub mod particle;
 pub mod rich_text;

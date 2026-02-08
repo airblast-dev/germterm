@@ -276,13 +276,12 @@ pub fn draw_fps_counter(layer: &mut Layer, x: i16, y: i16) {
 }
 
 pub(crate) mod internal {
-    use std::sync::Arc;
-
     use crate::{
         color::Color,
         draw::BLOCKTAD_CHAR_LUT,
         frame::DrawCall,
-        rich_text::{Attributes, RichText},
+        metadata::{CellFormat, Metadata},
+        rich_text::RichText,
     };
 
     pub fn fill_screen(draw_queue: &mut Vec<DrawCall>, cols: i16, rows: i16, color: Color) {
@@ -303,7 +302,9 @@ pub(crate) mod internal {
         color: Color,
     ) {
         let row_text: String = " ".repeat(width as usize);
-        let row_rich_text: RichText = RichText::new(&row_text).fg(Color::CLEAR).bg(color);
+        let row_rich_text: RichText = RichText::new(&row_text)
+            .with_fg(Color::CLEAR)
+            .with_bg(color);
 
         for row in 0..height {
             draw_text(draw_queue, x, y + row, row_rich_text.clone())
@@ -312,12 +313,10 @@ pub(crate) mod internal {
 
     pub fn erase_rect(draw_queue: &mut Vec<DrawCall>, x: i16, y: i16, width: i16, height: i16) {
         let row_text: String = " ".repeat(width as usize);
-        let row_rich_text: RichText = RichText {
-            text: Arc::new(row_text),
-            fg: Color::NO_COLOR,
-            bg: Color::NO_COLOR,
-            attributes: Attributes::empty(),
-        };
+        let metadata = Metadata::new()
+            .with_no_fg_color(true)
+            .with_no_bg_color(true);
+        let row_rich_text = RichText::new(row_text).with_metadata(metadata);
 
         for row in 0..height {
             draw_text(draw_queue, x, y + row, row_rich_text.clone())
@@ -337,8 +336,8 @@ pub(crate) mod internal {
         let blocktad_char: char = BLOCKTAD_CHAR_LUT[mask];
 
         let rich_text: RichText = RichText::new(blocktad_char.to_string())
-            .fg(color)
-            .attributes(Attributes::BLOCKTAD);
+            .with_fg(color)
+            .with_metadata(Metadata::new().with_cell_format(CellFormat::Blocktad));
 
         draw_text(draw_queue, cell_x, cell_y, rich_text);
     }
@@ -367,8 +366,8 @@ pub(crate) mod internal {
 
         let braille_char: char = std::char::from_u32(0x2800 + (1 << offset)).unwrap();
         let rich_text: RichText = RichText::new(braille_char.to_string())
-            .fg(color)
-            .attributes(Attributes::OCTAD);
+            .with_fg(color)
+            .with_metadata(Metadata::new().with_cell_format(CellFormat::Octad));
 
         draw_text(draw_queue, cell_x, cell_y, rich_text);
     }
@@ -387,8 +386,8 @@ pub(crate) mod internal {
         };
 
         let rich_text: RichText = RichText::new(half_block.to_string())
-            .fg(color)
-            .attributes(Attributes::TWOXEL);
+            .with_fg(color)
+            .with_metadata(Metadata::new().with_cell_format(CellFormat::Twoxel));
 
         draw_text(draw_queue, cell_x, cell_y, rich_text)
     }

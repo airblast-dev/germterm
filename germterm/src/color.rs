@@ -119,7 +119,6 @@ pub static LERP_LUT_B: [[u8; 256]; 256] = {
 pub struct Color(pub u32);
 
 impl Color {
-    pub const NO_COLOR: Self = Self(0xBAD_C0DE);
     pub const CLEAR: Self = Self(0x00_00_00_00);
     pub const WHITE: Self = Self(0xFF_FF_FF_FF);
     pub const DARK_GRAY: Self = Self(0xA9_A9_A9_FF);

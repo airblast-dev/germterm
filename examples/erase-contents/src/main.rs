@@ -41,7 +41,8 @@ fn main() -> io::Result<()> {
                 &mut layer,
                 0,
                 y_offset as i16,
-                RichText::new(text.repeat(TERM_COLS as usize / 2)).fg(Color::new(80, 80, 80, 255)),
+                RichText::new(text.repeat(TERM_COLS as usize / 2))
+                    .with_fg(Color::new(80, 80, 80, 255)),
             );
         }
 
