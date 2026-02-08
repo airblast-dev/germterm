@@ -127,9 +127,9 @@ pub fn draw_text(layer: &mut Layer, x: i16, y: i16, text: impl Into<RichText>) {
 pub fn fill_screen(layer: &mut Layer, color: Color) {
     let engine: &mut Engine = unsafe { &mut *layer.engine_ptr };
     let draw_queue: &mut Vec<DrawCall> = &mut engine.frame.layered_draw_queue[layer.index];
-    let cols: i16 = engine.frame.cols as i16;
-    let rows: i16 = engine.frame.rows as i16;
-    internal::fill_screen(draw_queue, cols, rows, color);
+    let width: i16 = engine.frame.width as i16;
+    let height: i16 = engine.frame.height as i16;
+    internal::fill_screen(draw_queue, width, height, color);
 }
 
 /// Erases a rect area, restoring the default bg color and deleting the characters.
@@ -313,7 +313,7 @@ pub(crate) mod internal {
 
     pub fn erase_rect(draw_queue: &mut Vec<DrawCall>, x: i16, y: i16, width: i16, height: i16) {
         let row_text: String = " ".repeat(width as usize);
-        let metadata = Metadata::new()
+        let metadata = Metadata::empty()
             .with_no_fg_color(true)
             .with_no_bg_color(true);
         let row_rich_text = RichText::new(row_text).with_metadata(metadata);
@@ -337,7 +337,7 @@ pub(crate) mod internal {
 
         let rich_text: RichText = RichText::new(blocktad_char.to_string())
             .with_fg(color)
-            .with_metadata(Metadata::new().with_cell_format(CellFormat::Blocktad));
+            .with_metadata(Metadata::empty().with_cell_format(CellFormat::Blocktad));
 
         draw_text(draw_queue, cell_x, cell_y, rich_text);
     }
@@ -367,7 +367,7 @@ pub(crate) mod internal {
         let braille_char: char = std::char::from_u32(0x2800 + (1 << offset)).unwrap();
         let rich_text: RichText = RichText::new(braille_char.to_string())
             .with_fg(color)
-            .with_metadata(Metadata::new().with_cell_format(CellFormat::Octad));
+            .with_metadata(Metadata::empty().with_cell_format(CellFormat::Octad));
 
         draw_text(draw_queue, cell_x, cell_y, rich_text);
     }
@@ -387,7 +387,7 @@ pub(crate) mod internal {
 
         let rich_text: RichText = RichText::new(half_block.to_string())
             .with_fg(color)
-            .with_metadata(Metadata::new().with_cell_format(CellFormat::Twoxel));
+            .with_metadata(Metadata::empty().with_cell_format(CellFormat::Twoxel));
 
         draw_text(draw_queue, cell_x, cell_y, rich_text)
     }

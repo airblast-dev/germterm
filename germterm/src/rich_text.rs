@@ -48,7 +48,7 @@ impl RichText {
             fg: Color::WHITE,
             bg: Color::CLEAR,
             attributes: Attributes::empty(),
-            metadata: Metadata::new(),
+            metadata: Metadata::empty(),
         }
     }
 

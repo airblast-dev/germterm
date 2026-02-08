@@ -27,7 +27,7 @@ impl Metadata {
     }
 
     #[inline]
-    pub fn new() -> Self {
+    pub const fn empty() -> Self {
         Metadata(0b_0000_0000)
     }
 
