@@ -40,17 +40,10 @@ fn bench_frame_diff(c: &mut Criterion) {
             |b, &(w, h)| {
                 let mut frame = FramePair::new(w as u16, h as u16);
 
-                // Fill current frame with something different from default
-                // Default is ' ', NO_COLOR, NO_COLOR
-                // We change char to 'A'
                 let mut current = frame.current_mut();
                 for i in 0..(w as usize * h as usize) {
                     current[i] = full_cell();
                 }
-
-                // Note: FramePair initialized with OldCurrent order, so 'current' is the second buffer.
-                // The first buffer is 'old' and initialized to default.
-                // So setting current to 'A' makes it different from old.
 
                 b.iter(|| {
                     for d in black_box(&frame).diff() {
