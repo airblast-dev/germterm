@@ -255,13 +255,13 @@ fn compose_cell(old: Cell, new: Cell, default_blending_color: Color) -> Cell {
     let new_cell_format: CellFormat = new.metadata.cell_format();
     let old_cell_format: CellFormat = old.metadata.cell_format();
 
-    let new_twoxel: bool = new.metadata.cell_format() == CellFormat::Twoxel;
-    let new_octad: bool = new.metadata.cell_format() == CellFormat::Octad;
-    let new_blocktad: bool = new.metadata.cell_format() == CellFormat::Blocktad;
+    let new_twoxel: bool = new_cell_format == CellFormat::Twoxel;
+    let new_octad: bool = new_cell_format == CellFormat::Octad;
+    let new_blocktad: bool = new_cell_format == CellFormat::Blocktad;
 
-    let old_twoxel: bool = old.metadata.cell_format() == CellFormat::Twoxel;
-    let old_octad: bool = old.metadata.cell_format() == CellFormat::Octad;
-    let old_blocktad: bool = old.metadata.cell_format() == CellFormat::Blocktad;
+    let old_twoxel: bool = old_cell_format == CellFormat::Twoxel;
+    let old_octad: bool = old_cell_format == CellFormat::Octad;
+    let old_blocktad: bool = old_cell_format == CellFormat::Blocktad;
 
     // Foreground related
     let new_fg_no_color: bool = new.metadata.no_fg_color();
