@@ -304,7 +304,8 @@ pub(crate) mod internal {
         let row_text: String = " ".repeat(width as usize);
         let row_rich_text: RichText = RichText::new(&row_text)
             .with_fg(Color::CLEAR)
-            .with_bg(color);
+            .with_bg(color)
+            .with_attributes(Attributes::NO_FG_COLOR);
 
         for row in 0..height {
             draw_text(draw_queue, x, y + row, row_rich_text.clone())
@@ -314,6 +315,8 @@ pub(crate) mod internal {
     pub fn erase_rect(draw_queue: &mut Vec<DrawCall>, x: i16, y: i16, width: i16, height: i16) {
         let row_text: String = " ".repeat(width as usize);
         let row_rich_text = RichText::new(row_text)
+            .with_fg(Color::CLEAR)
+            .with_bg(Color::CLEAR)
             .with_attributes(Attributes::NO_FG_COLOR | Attributes::NO_BG_COLOR);
 
         for row in 0..height {

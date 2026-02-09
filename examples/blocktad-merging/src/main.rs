@@ -13,7 +13,7 @@ pub const TERM_ROWS: u16 = 20;
 
 fn main() -> io::Result<()> {
     let mut engine: Engine = Engine::new(TERM_COLS, TERM_ROWS)
-        .title("octad-merging")
+        .title("blocktad-merging")
         .limit_fps(240);
 
     let mut layer = Layer::new(&mut engine, 0);

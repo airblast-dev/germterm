@@ -1,22 +1,20 @@
 use germterm::{
-    color::{Color, ColorRgb},
+    color::Color,
     crossterm::event::{Event, KeyCode, KeyEvent},
     draw::{Layer, draw_fps_counter, draw_rect, draw_text, erase_rect},
-    engine::{Engine, end_frame, exit_cleanup, init, override_default_blending_color, start_frame},
+    engine::{Engine, end_frame, exit_cleanup, init, start_frame},
     input::poll_input,
     rich_text::{Attributes, RichText},
 };
 use std::io;
 
-pub const TERM_COLS: u16 = 40;
+pub const TERM_COLS: u16 = 80;
 pub const TERM_ROWS: u16 = 25;
 
 fn main() -> io::Result<()> {
     let mut engine: Engine = Engine::new(TERM_COLS, TERM_ROWS)
         .title("standard-blending")
         .limit_fps(0);
-
-    override_default_blending_color(&mut engine, ColorRgb::RED);
 
     let mut layer = Layer::new(&mut engine, 0);
 
@@ -38,6 +36,16 @@ fn main() -> io::Result<()> {
         draw_rect(
             &mut layer,
             0,
+            0,
+            TERM_COLS as i16,
+            9,
+            Color::CYAN.with_alpha(170),
+        );
+        erase_rect(&mut layer, 0, 0, TERM_COLS as i16, 9);
+
+        draw_rect(
+            &mut layer,
+            0,
             9,
             TERM_COLS as i16,
             8,
@@ -48,6 +56,14 @@ fn main() -> io::Result<()> {
         draw_test_cases(&mut layer, 0, 1, engine.game_time);
         draw_test_cases(&mut layer, 0, 9, engine.game_time);
         draw_test_cases(&mut layer, 0, 17, engine.game_time);
+
+        draw_test_cases(&mut layer, 40, 1, engine.game_time);
+        draw_test_cases(&mut layer, 40, 9, engine.game_time);
+        draw_test_cases(&mut layer, 40, 17, engine.game_time);
+
+        // Should do nothing
+        draw_rect(&mut layer, 40, 0, 40, 25, Color::CLEAR);
+
         draw_fps_counter(&mut layer, 0, 0);
         end_frame(&mut engine)?;
     }

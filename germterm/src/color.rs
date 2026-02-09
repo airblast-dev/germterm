@@ -376,13 +376,6 @@ pub(crate) fn blend_source_over(bottom: Color, top: Color) -> Color {
     let (tr, tg, tb, ta) = top.rgba();
     let (br, bg, bb, ba) = bottom.rgba();
 
-    if ta == 0 {
-        return bottom;
-    }
-    if ta == 255 {
-        return top;
-    }
-
     let alpha_mult = BLEND_ALPHA_MULT[ta as usize][ba as usize] as u16;
     let out_a = ta as u16 + alpha_mult;
 

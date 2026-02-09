@@ -20,8 +20,8 @@ pub struct Cell {
 impl Cell {
     pub const EMPTY: Cell = Cell {
         ch: ' ',
-        fg: Color::BLACK,
-        bg: Color::BLACK,
+        fg: Color::CLEAR,
+        bg: Color::CLEAR,
         attributes: Attributes::from_bits_truncate(
             Attributes::NO_FG_COLOR.bits() | Attributes::NO_BG_COLOR.bits(),
         ),
