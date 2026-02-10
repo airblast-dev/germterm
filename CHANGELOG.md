@@ -6,8 +6,8 @@
 
 ### 🛠 Changed
 
-- Improved stability and performance of the diffing step (by @airblast-dev)
-- Removed unnecessary allocations (by @airblast-dev)
+- Improved stability and performance of the diffing step ([@airblast-dev](https://github.com/airblast-dev))
+- Removed unnecessary allocations (by [@airblast-dev](https://github.com/airblast-dev))
 
 ### ⚠ Breaking
 
