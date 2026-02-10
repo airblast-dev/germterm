@@ -1,14 +1,14 @@
 use germterm::{
     color::Color,
     crossterm::event::{Event, KeyCode, KeyEvent},
-    draw::{Layer, draw_fps_counter, draw_rect, draw_text},
+    draw::{Layer, draw_fps_counter, draw_rect, draw_text, erase_rect},
     engine::{Engine, end_frame, exit_cleanup, init, start_frame},
     input::poll_input,
     rich_text::{Attributes, RichText},
 };
 use std::io;
 
-pub const TERM_COLS: u16 = 40;
+pub const TERM_COLS: u16 = 80;
 pub const TERM_ROWS: u16 = 25;
 
 fn main() -> io::Result<()> {
@@ -36,6 +36,16 @@ fn main() -> io::Result<()> {
         draw_rect(
             &mut layer,
             0,
+            0,
+            TERM_COLS as i16,
+            9,
+            Color::CYAN.with_alpha(170),
+        );
+        erase_rect(&mut layer, 0, 0, TERM_COLS as i16, 9);
+
+        draw_rect(
+            &mut layer,
+            0,
             9,
             TERM_COLS as i16,
             8,
@@ -46,6 +56,14 @@ fn main() -> io::Result<()> {
         draw_test_cases(&mut layer, 0, 1, engine.game_time);
         draw_test_cases(&mut layer, 0, 9, engine.game_time);
         draw_test_cases(&mut layer, 0, 17, engine.game_time);
+
+        draw_test_cases(&mut layer, 40, 1, engine.game_time);
+        draw_test_cases(&mut layer, 40, 9, engine.game_time);
+        draw_test_cases(&mut layer, 40, 17, engine.game_time);
+
+        // Should do nothing
+        draw_rect(&mut layer, 40, 0, 40, 25, Color::CLEAR);
+
         draw_fps_counter(&mut layer, 0, 0);
         end_frame(&mut engine)?;
     }
@@ -63,8 +81,8 @@ fn draw_test_cases(layer: &mut Layer, x: i16, y: i16, game_time: f32) {
         x + 2,
         y + 3,
         RichText::new("ab")
-            .fg(Color::WHITE)
-            .attributes(Attributes::BOLD),
+            .with_fg(Color::WHITE)
+            .with_attributes(Attributes::BOLD),
     );
 
     // White square
@@ -75,8 +93,8 @@ fn draw_test_cases(layer: &mut Layer, x: i16, y: i16, game_time: f32) {
         x + 4,
         y + 2,
         RichText::new("ab")
-            .fg(Color::BLACK)
-            .attributes(Attributes::BOLD),
+            .with_fg(Color::BLACK)
+            .with_attributes(Attributes::BOLD),
     );
 
     // --- Background to background blending ---
@@ -85,7 +103,12 @@ fn draw_test_cases(layer: &mut Layer, x: i16, y: i16, game_time: f32) {
 
     // --- Background over text blending ---
     draw_rect(layer, x + 18, y + 2, 4, 2, Color::WHITE);
-    draw_text(layer, x + 18, y + 2, RichText::new("1234").fg(Color::RED));
+    draw_text(
+        layer,
+        x + 18,
+        y + 2,
+        RichText::new("1234").with_fg(Color::RED),
+    );
     draw_rect(layer, x + 20, y + 1, 4, 2, Color::BLACK.with_alpha(155));
 
     // --- Opaque background covering text (letters "yz" here) ---
@@ -95,8 +118,8 @@ fn draw_test_cases(layer: &mut Layer, x: i16, y: i16, game_time: f32) {
         x + 26,
         y + 2,
         RichText::new("wxyz")
-            .fg(Color::GREEN)
-            .attributes(Attributes::BOLD),
+            .with_fg(Color::GREEN)
+            .with_attributes(Attributes::BOLD),
     );
     draw_rect(layer, x + 28, y + 1, 4, 2, Color::BLUE);
 
@@ -107,16 +130,16 @@ fn draw_test_cases(layer: &mut Layer, x: i16, y: i16, game_time: f32) {
         x + 34,
         y + 2,
         RichText::new("abcd")
-            .fg(Color::RED)
-            .attributes(Attributes::BOLD),
+            .with_fg(Color::RED)
+            .with_attributes(Attributes::BOLD),
     );
     draw_text(
         layer,
         x + 34,
         y + 3,
         RichText::new("abcd")
-            .fg(Color::RED.with_alpha(127))
-            .attributes(Attributes::BOLD),
+            .with_fg(Color::RED.with_alpha(127))
+            .with_attributes(Attributes::BOLD),
     );
 
     let freq: f32 = 1.0;
@@ -130,16 +153,16 @@ fn draw_test_cases(layer: &mut Layer, x: i16, y: i16, game_time: f32) {
         x + 2,
         y + 6,
         RichText::new("xxxx")
-            .fg(Color::RED)
-            .attributes(Attributes::BOLD),
+            .with_fg(Color::RED)
+            .with_attributes(Attributes::BOLD),
     );
     draw_text(
         layer,
         x + 2,
         y + 6,
         RichText::new("o o")
-            .fg(Color::GREEN.with_alpha(t_byte))
-            .attributes(Attributes::BOLD),
+            .with_fg(Color::GREEN.with_alpha(t_byte))
+            .with_attributes(Attributes::BOLD),
     );
 
     // --- fg to no fg color + no bg color blending test ---
@@ -148,8 +171,8 @@ fn draw_test_cases(layer: &mut Layer, x: i16, y: i16, game_time: f32) {
         x + 10,
         y + 6,
         RichText::new("boop")
-            .fg(Color::VIOLET.with_alpha(t_byte))
-            .attributes(Attributes::BOLD),
+            .with_fg(Color::VIOLET.with_alpha(t_byte))
+            .with_attributes(Attributes::BOLD),
     );
 
     // --- Drawing opaque text with a solid bg ---
@@ -158,9 +181,9 @@ fn draw_test_cases(layer: &mut Layer, x: i16, y: i16, game_time: f32) {
         x + 18,
         y + 6,
         RichText::new("bonk")
-            .fg(Color::GREEN.with_alpha(t_byte))
-            .bg(Color::DARK_GREEN)
-            .attributes(Attributes::BOLD),
+            .with_fg(Color::GREEN.with_alpha(t_byte))
+            .with_bg(Color::DARK_GREEN)
+            .with_attributes(Attributes::BOLD),
     );
 
     // --- Drawing opaque text with a solid bg ---
@@ -169,9 +192,9 @@ fn draw_test_cases(layer: &mut Layer, x: i16, y: i16, game_time: f32) {
         x + 26,
         y + 6,
         RichText::new("bang")
-            .fg(Color::RED.with_alpha(t_byte))
-            .bg(Color::GREEN.with_alpha(30))
-            .attributes(Attributes::BOLD),
+            .with_fg(Color::RED.with_alpha(t_byte))
+            .with_bg(Color::GREEN.with_alpha(30))
+            .with_attributes(Attributes::BOLD),
     );
 
     // --- Drawing a clear rect ---
@@ -186,15 +209,15 @@ fn draw_test_cases(layer: &mut Layer, x: i16, y: i16, game_time: f32) {
         x + 34,
         y + 6,
         RichText::new("xxxx")
-            .fg(Color::RED.with_alpha(127))
-            .attributes(Attributes::BOLD),
+            .with_fg(Color::RED.with_alpha(127))
+            .with_attributes(Attributes::BOLD),
     );
     draw_text(
         layer,
         x + 34,
         y + 6,
         RichText::new("o o")
-            .fg(Color::WHITE.with_alpha(t_byte))
-            .attributes(Attributes::BOLD),
+            .with_fg(Color::WHITE.with_alpha(t_byte))
+            .with_attributes(Attributes::BOLD),
     );
 }

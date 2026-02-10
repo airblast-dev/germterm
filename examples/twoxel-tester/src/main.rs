@@ -60,7 +60,7 @@ fn draw_test_case(layer: &mut Layer, x: f32, y: f32) {
         layer,
         x as i16,
         y as i16,
-        RichText::new("1").fg(Color::DARK_GRAY),
+        RichText::new("1").with_fg(Color::DARK_GRAY),
     );
 
     draw_twoxel(layer, x, y + 2.0, Color::RED);
@@ -72,7 +72,7 @@ fn draw_test_case(layer: &mut Layer, x: f32, y: f32) {
         layer,
         x as i16 + 2,
         y as i16,
-        RichText::new("2").fg(Color::DARK_GRAY),
+        RichText::new("2").with_fg(Color::DARK_GRAY),
     );
 
     draw_twoxel(layer, x + 2.0, y + 2.5, Color::GREEN);
@@ -89,7 +89,7 @@ fn draw_test_case(layer: &mut Layer, x: f32, y: f32) {
         layer,
         x as i16 + 4,
         y as i16,
-        RichText::new("3").fg(Color::DARK_GRAY),
+        RichText::new("3").with_fg(Color::DARK_GRAY),
     );
 
     draw_twoxel(layer, x + 4.0, y + 2.0, Color::RED);
@@ -108,7 +108,7 @@ fn draw_test_case(layer: &mut Layer, x: f32, y: f32) {
         layer,
         x as i16 + 6,
         y as i16,
-        RichText::new("4").fg(Color::DARK_GRAY),
+        RichText::new("4").with_fg(Color::DARK_GRAY),
     );
 
     draw_twoxel(layer, x + 6.0, y + 2.0, Color::RED);
@@ -134,7 +134,7 @@ fn draw_test_case(layer: &mut Layer, x: f32, y: f32) {
         layer,
         x as i16 + 8,
         y as i16,
-        RichText::new("5").fg(Color::DARK_GRAY),
+        RichText::new("5").with_fg(Color::DARK_GRAY),
     );
 
     draw_twoxel(layer, x + 8.0, y + 2.0, Color::RED);
@@ -160,7 +160,7 @@ fn draw_test_case(layer: &mut Layer, x: f32, y: f32) {
         layer,
         x as i16 + 10,
         y as i16,
-        RichText::new("6").fg(Color::DARK_GRAY),
+        RichText::new("6").with_fg(Color::DARK_GRAY),
     );
 
     draw_twoxel(layer, x + 10.0, y + 2.5, Color::GREEN);
@@ -186,7 +186,7 @@ fn draw_test_case(layer: &mut Layer, x: f32, y: f32) {
         layer,
         x as i16 + 12,
         y as i16,
-        RichText::new("7").fg(Color::DARK_GRAY),
+        RichText::new("7").with_fg(Color::DARK_GRAY),
     );
 
     draw_twoxel(layer, x + 12.0, y + 2.5, Color::GREEN);
@@ -212,76 +212,80 @@ fn draw_test_case(layer: &mut Layer, x: f32, y: f32) {
         layer,
         x as i16 - 10,
         y as i16 + 2,
-        RichText::new("Composed:").fg(Color::DARK_GRAY),
+        RichText::new("Composed:").with_fg(Color::DARK_GRAY),
     );
 
     draw_text(
         layer,
         x as i16 - 11,
         y as i16 + 4,
-        RichText::new("Low alpha:").fg(Color::DARK_GRAY),
+        RichText::new("Low alpha:").with_fg(Color::DARK_GRAY),
     );
 
     draw_text(
         layer,
         x as i16 - 10,
         y as i16 + 6,
-        RichText::new("Expected:").fg(Color::DARK_GRAY),
+        RichText::new("Expected:").with_fg(Color::DARK_GRAY),
     );
 
     draw_text(
         layer,
         x as i16 - 2,
         y as i16 + 5,
-        RichText::new("-----------------").fg(Color::DARK_GRAY),
+        RichText::new("-----------------").with_fg(Color::DARK_GRAY),
     );
     // 1.
     draw_text(
         layer,
         x as i16,
         y as i16 + 6,
-        RichText::new("▀").fg(Color::RED),
+        RichText::new("▀").with_fg(Color::RED),
     );
     // 2.
     draw_text(
         layer,
         x as i16 + 2,
         y as i16 + 6,
-        RichText::new("▄").fg(Color::GREEN),
+        RichText::new("▄").with_fg(Color::GREEN),
     );
     // 3.
     draw_text(
         layer,
         x as i16 + 4,
         y as i16 + 6,
-        RichText::new("▀").fg(Color::RED).bg(Color::GREEN),
+        RichText::new("▀").with_fg(Color::RED).with_bg(Color::GREEN),
     );
     // 4.
     draw_text(
         layer,
         x as i16 + 6,
         y as i16 + 6,
-        RichText::new("▀").fg(Color::LIGHT_GRAY).bg(Color::GREEN),
+        RichText::new("▀")
+            .with_fg(Color::LIGHT_GRAY)
+            .with_bg(Color::GREEN),
     );
     // 5.
     draw_text(
         layer,
         x as i16 + 8,
         y as i16 + 6,
-        RichText::new("▀").fg(Color::RED).bg(Color::LIGHT_GRAY),
+        RichText::new("▀").with_fg(Color::RED).with_bg(Color::LIGHT_GRAY),
     );
     // 6.
     draw_text(
         layer,
         x as i16 + 10,
         y as i16 + 6,
-        RichText::new("▄").fg(Color::GREEN).bg(Color::LIGHT_GRAY),
+        RichText::new("▄")
+            .with_fg(Color::GREEN)
+            .with_bg(Color::LIGHT_GRAY),
     );
     // 7.
     draw_text(
         layer,
         x as i16 + 12,
         y as i16 + 6,
-        RichText::new("▄").fg(Color::LIGHT_GRAY).bg(Color::RED),
+        RichText::new("▄").with_fg(Color::LIGHT_GRAY).with_bg(Color::RED),
     );
 }

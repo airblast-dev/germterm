@@ -193,8 +193,8 @@ fn main() -> io::Result<()> {
             10,
             1,
             RichText::new(fps_text)
-                .fg(Color(0x45475aff))
-                .attributes(Attributes::BOLD),
+                .with_fg(Color(0x45475aff))
+                .with_attributes(Attributes::BOLD),
         );
 
         if matches!(game_state, GameState::GameOver) {
@@ -203,8 +203,8 @@ fn main() -> io::Result<()> {
                 (TERM_COLS / 2 - 6) as i16,
                 (TERM_ROWS / 2 - 1) as i16,
                 RichText::new("GAME OVER!")
-                    .fg(Color::RED)
-                    .attributes(Attributes::BOLD),
+                    .with_fg(Color::RED)
+                    .with_attributes(Attributes::BOLD),
             );
         }
 

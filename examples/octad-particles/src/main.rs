@@ -79,8 +79,8 @@ fn main() -> io::Result<()> {
             26,
             (TERM_ROWS / 2) as i16,
             RichText::new("Press W to spawn particles!")
-                .fg(Color::WHITE.with_alpha(100))
-                .attributes(Attributes::BOLD),
+                .with_fg(Color::WHITE.with_alpha(100))
+                .with_attributes(Attributes::BOLD),
         );
 
         draw_fps_counter(&mut text_top_layer, 0, 0);
