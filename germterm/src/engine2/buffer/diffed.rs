@@ -67,12 +67,12 @@ impl<Buf: Buffer> Buffer for DiffedBuffers<Buf> {
         pos: Position,
         cell: Cell,
     ) -> Result<(), super::ErrorOutOfBoundsAxises> {
-        let idx = 1 - self.frame_order as usize;
+        let idx = self.frame_order as usize;
         self.cells[idx].set_cell_checked(pos, cell)
     }
 
     fn get_cell_checked(&self, pos: Position) -> Result<&Cell, super::ErrorOutOfBoundsAxises> {
-        let idx = 1 - self.frame_order as usize;
+        let idx = self.frame_order as usize;
         self.cells[idx].get_cell_checked(pos)
     }
 
@@ -80,22 +80,22 @@ impl<Buf: Buffer> Buffer for DiffedBuffers<Buf> {
         &mut self,
         pos: Position,
     ) -> Result<&mut Cell, super::ErrorOutOfBoundsAxises> {
-        let idx = 1 - self.frame_order as usize;
+        let idx = self.frame_order as usize;
         self.cells[idx].get_cell_mut_checked(pos)
     }
 
     fn fill(&mut self, cell: Cell) {
-        let idx = 1 - self.frame_order as usize;
+        let idx = self.frame_order as usize;
         self.cells[idx].fill(cell);
     }
 
     fn start_frame(&mut self) {
-        let idx = 1 - self.frame_order as usize;
+        let idx = self.frame_order as usize;
         self.cells[idx].start_frame();
     }
 
     fn end_frame(&mut self) {
-        let idx = 1 - self.frame_order as usize;
+        let idx = self.frame_order as usize;
         self.cells[idx].end_frame();
         self.swap_frames();
     }
@@ -112,11 +112,10 @@ impl<Buf: Buffer> Drawer for DiffedBuffers<Buf> {
     fn draw(&mut self) -> impl Iterator<Item = DrawCall<'_>> {
         let width = self.size.width;
         let height = self.size.height;
-        let order = 1 - self.frame_order as usize;
-        let old_order = 1 - order;
+        let order = self.frame_order as usize;
 
         let current_buf = &self.cells[order];
-        let old_buf = &self.cells[old_order];
+        let old_buf = &self.cells[1 - order];
 
         (0..height).flat_map(move |y| {
             (0..width).filter_map(move |x| {
