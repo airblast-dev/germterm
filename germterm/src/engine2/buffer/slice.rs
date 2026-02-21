@@ -144,13 +144,12 @@ impl<Buf: Buffer + ?Sized> Buffer for SubBuffer<'_, Buf> {
         cell: Cell,
     ) -> Result<(), super::ErrorOutOfBoundsAxises> {
         let translated = self.translate(pos)?;
-        self.inner.set_cell(translated, cell);
-        Ok(())
+        self.inner.set_cell_checked(translated, cell)
     }
 
     fn get_cell_checked(&self, pos: Position) -> Result<&Cell, super::ErrorOutOfBoundsAxises> {
         let translated = self.translate(pos)?;
-        Ok(self.inner.get_cell(translated))
+        self.inner.get_cell_checked(translated)
     }
 
     fn get_cell_mut_checked(
@@ -158,7 +157,7 @@ impl<Buf: Buffer + ?Sized> Buffer for SubBuffer<'_, Buf> {
         pos: Position,
     ) -> Result<&mut Cell, super::ErrorOutOfBoundsAxises> {
         let translated = self.translate(pos)?;
-        Ok(self.inner.get_cell_mut(translated))
+        self.inner.get_cell_mut_checked(translated)
     }
 }
 

@@ -106,12 +106,12 @@ impl ResizableBuffer for FlatBuffer {
         fn is_copy<T: Unpin>(arg: &T) {
             let _ = || is_copy::<Cell>(&Cell::EMPTY);
         }
+        let new_temp_len = (self.size.height as usize) * (size.width as usize);
 
         // Width
         match old_w.cmp(&new_w) {
             // Grow case
             Ordering::Less => {
-                let new_len = size.area() as usize;
                 let grow_by = new_w - old_w;
 
                 // SAFETY:
@@ -138,7 +138,7 @@ impl ResizableBuffer for FlatBuffer {
                         std::slice::from_raw_parts_mut(base.add(old_w), grow_by).fill(Cell::EMPTY);
                     }
 
-                    self.cells.set_len(new_len);
+                    self.cells.set_len(new_temp_len);
                 }
             }
             // Shrink case
@@ -147,6 +147,8 @@ impl ResizableBuffer for FlatBuffer {
                 for y in 1..old_h {
                     ptr::copy(base.add(y * old_w), base.add(y * new_w), new_w);
                 }
+
+                self.cells.set_len(new_temp_len);
             },
             Ordering::Equal => {}
         }
