@@ -5,7 +5,7 @@ use crate::{
         buffer::{Buffer, Drawer, slice::SubBuffer},
         draw::{Position, Rect},
     },
-    rich_text::Attributes,
+    style::Attributes,
 };
 
 #[doc(hidden)]

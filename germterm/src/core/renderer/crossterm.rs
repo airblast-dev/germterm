@@ -4,7 +4,7 @@ use crossterm::{cursor, event, execute, queue, style, terminal};
 
 use crate::{
     core::{DrawCall, renderer::Renderer},
-    rich_text::Attributes,
+    style::Attributes,
 };
 
 struct CrosstermRenderer<W: Write> {
@@ -45,10 +45,7 @@ impl<W: Write> Renderer for CrosstermRenderer<W> {
         self.out.flush()
     }
 
-    fn render<'a>(
-        &mut self,
-        calls: impl Iterator<Item = DrawCall<'a>>,
-    ) -> Result<(), Self::Error> {
+    fn render<'a>(&mut self, calls: impl Iterator<Item = DrawCall<'a>>) -> Result<(), Self::Error> {
         // TODO: Based on the crossterm source there are a few optimizations we can do here
         // specifically when writing fg/bg
         //

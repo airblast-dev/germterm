@@ -1,29 +1,7 @@
 //! Stylized text.
 
-use crate::{cell::CellFormat, color::Color};
-use bitflags::bitflags;
+use crate::{cell::CellFormat, color::Color, style::Attributes};
 use std::sync::Arc;
-
-bitflags! {
-    /// Attributes that can be applied to drawn text.
-    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    pub struct Attributes: u8 {
-        const BOLD          = 0b_00000001;
-        const ITALIC        = 0b_00000010;
-        const UNDERLINED    = 0b_00000100;
-        const HIDDEN        = 0b_00001000;
-
-        // This is the same as all of the bits in user code.
-        // Internally we use this mask to filter out unknown bits form a user.
-        #[doc(hidden)]
-        const KNOWN = Self::BOLD.bits() | Self::ITALIC.bits() | Self::UNDERLINED.bits() | Self::HIDDEN.bits();
-        // These are doc hidden as users should not use them
-        #[doc(hidden)]
-        const NO_FG_COLOR   = 0b_00010000;
-        #[doc(hidden)]
-        const NO_BG_COLOR   = 0b_00100000;
-    }
-}
 
 /// Stylized text representation.
 ///

@@ -1,4 +1,4 @@
-use crate::{color::Color, rich_text::Attributes};
+use crate::{color::Color, style::Attributes};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CellFormat {
