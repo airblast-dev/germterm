@@ -8,7 +8,8 @@ use germterm::{
     particle::{
         ParticleColor, ParticleEmitter, ParticleEmitterShape, ParticleSpec, spawn_particles,
     },
-    rich_text::{Attributes, RichText},
+    rich_text::RichText,
+    style::Attributes,
 };
 use rand::{Rng, rngs::ThreadRng};
 use std::io;
@@ -82,7 +83,7 @@ fn main() -> io::Result<()> {
             26,
             (TERM_ROWS / 2) as i16,
             RichText::new("Press W to spawn particles!")
-                .with_fg(Color::WHITE.with_alpha(100))
+                .with_fg(Some(Color::WHITE.with_alpha(100)))
                 .with_attributes(Attributes::BOLD),
         );
 

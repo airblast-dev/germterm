@@ -1,21 +1,13 @@
 //! Stylized text.
 
-use crate::{cell::CellFormat, color::Color};
-use bitflags::bitflags;
-use std::sync::Arc;
+use bitflags::Flags;
 
-bitflags! {
-    /// Attributes that can be applied to drawn text.
-    #[derive(Clone, Copy, PartialEq, Eq)]
-    pub struct Attributes: u8 {
-        const BOLD          = 0b_00000001;
-        const ITALIC        = 0b_00000010;
-        const UNDERLINED    = 0b_00000100;
-        const HIDDEN        = 0b_00001000;
-        const NO_FG_COLOR   = 0b_00010000;
-        const NO_BG_COLOR   = 0b_00100000;
-    }
-}
+use crate::{
+    cell::CellFormat,
+    color::Color,
+    style::{Attributes, Style},
+};
+use std::sync::Arc;
 
 /// Stylized text representation.
 ///
@@ -28,9 +20,7 @@ bitflags! {
 #[derive(Clone)]
 pub struct RichText {
     pub text: Arc<String>,
-    pub fg: Color,
-    pub bg: Color,
-    pub attributes: Attributes,
+    pub style: Style,
     pub(crate) cell_format: CellFormat,
 }
 
@@ -47,34 +37,34 @@ impl RichText {
     pub fn new(text: impl Into<String>) -> Self {
         Self {
             text: Arc::new(text.into()),
-            fg: Color::WHITE,
-            bg: Color::CLEAR,
-            attributes: Attributes::empty(),
+            style: Style::new(None, None, Attributes::empty()),
             cell_format: CellFormat::Standard,
         }
     }
 
     #[inline]
-    pub fn with_fg(mut self, color: Color) -> Self {
-        self.fg = color;
+    pub fn with_fg(mut self, color: Option<Color>) -> Self {
+        self.style.set_fg(color);
         self
     }
 
     #[inline]
-    pub fn with_bg(mut self, color: Color) -> Self {
-        self.bg = color;
-        self
-    }
-
-    #[inline]
-    pub fn with_attributes(mut self, attributes: Attributes) -> Self {
-        self.attributes = attributes;
+    pub fn with_bg(mut self, color: Option<Color>) -> Self {
+        self.style.set_bg(color);
         self
     }
 
     #[inline]
     pub(crate) fn with_cell_format(mut self, format: CellFormat) -> Self {
         self.cell_format = format;
+        self
+    }
+
+    #[inline]
+    pub fn with_attributes(mut self, attrs: Attributes) -> Self {
+        self.style.attributes |= attrs
+            & (Attributes::ITALIC | Attributes::BOLD | Attributes::HIDDEN | Attributes::UNDERLINED);
+
         self
     }
 }

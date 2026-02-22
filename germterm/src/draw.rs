@@ -32,13 +32,8 @@
 //! that are consumed by the engine at the end of the frame.
 
 use crate::{
-    cell::CellFormat,
-    color::Color,
-    engine::Engine,
-    fps_counter::get_fps,
-    frame::DrawCall,
-    layer::LayerIndex,
-    rich_text::{Attributes, RichText},
+    cell::CellFormat, color::Color, engine::Engine, fps_counter::get_fps, frame::DrawCall,
+    layer::LayerIndex, rich_text::RichText,
 };
 
 #[rustfmt::skip]
@@ -119,10 +114,7 @@ pub fn erase_rect(
     height: i16,
 ) {
     let row_text: String = " ".repeat(width as usize);
-    let row_rich_text = RichText::new(row_text)
-        .with_fg(Color::CLEAR)
-        .with_bg(Color::CLEAR)
-        .with_attributes(Attributes::NO_FG_COLOR | Attributes::NO_BG_COLOR);
+    let row_rich_text = RichText::new(row_text);
 
     for row in 0..height {
         draw_text(engine, layer_index, x, y + row, row_rich_text.clone())
@@ -148,10 +140,7 @@ pub fn draw_rect(
     color: Color,
 ) {
     let row_text: String = " ".repeat(width as usize);
-    let row_rich_text: RichText = RichText::new(&row_text)
-        .with_fg(Color::CLEAR)
-        .with_bg(color)
-        .with_attributes(Attributes::NO_FG_COLOR);
+    let row_rich_text: RichText = RichText::new(&row_text).with_bg(Some(color));
 
     for row in 0..height {
         draw_text(engine, layer_index, x, y + row, row_rich_text.clone())
@@ -203,7 +192,7 @@ pub fn draw_octad(engine: &mut Engine, layer_index: LayerIndex, x: f32, y: f32, 
 
     let braille_char: char = std::char::from_u32(0x2800 + (1 << offset)).unwrap();
     let rich_text: RichText = RichText::new(braille_char.to_string())
-        .with_fg(color)
+        .with_fg(Some(color))
         .with_cell_format(CellFormat::Octad);
 
     draw_text(engine, layer_index, cell_x, cell_y, rich_text);
@@ -248,7 +237,7 @@ pub fn draw_blocktad(engine: &mut Engine, layer_index: LayerIndex, x: f32, y: f3
 
     let blocktad_char: char = BLOCKTAD_CHAR_LUT[mask];
     let rich_text: RichText = RichText::new(blocktad_char.to_string())
-        .with_fg(color)
+        .with_fg(Some(color))
         .with_cell_format(CellFormat::Blocktad);
 
     draw_text(engine, layer_index, cell_x, cell_y, rich_text);
@@ -291,7 +280,7 @@ pub fn draw_twoxel(engine: &mut Engine, layer_index: LayerIndex, x: f32, y: f32,
         _ => panic!("Twoxel 'sub_y': {sub_y} falls out of range."),
     };
     let rich_text: RichText = RichText::new(half_block.to_string())
-        .with_fg(color)
+        .with_fg(Some(color))
         .with_cell_format(CellFormat::Twoxel);
 
     draw_text(engine, layer_index, cell_x, cell_y, rich_text)

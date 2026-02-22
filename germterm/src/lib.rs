@@ -13,3 +13,4 @@ pub mod input;
 pub mod layer;
 pub mod particle;
 pub mod rich_text;
+pub mod style;

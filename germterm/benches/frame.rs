@@ -1,11 +1,15 @@
 use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
-use germterm::{cell::Cell, color::Color, frame::FramePair};
+use germterm::{
+    cell::Cell,
+    color::Color,
+    frame::FramePair,
+    style::{Attributes, Style},
+};
 
 fn full_cell() -> Cell {
     let mut cell = Cell::EMPTY;
     cell.ch = 'X';
-    cell.fg = Color::WHITE;
-    cell.bg = Color::BLACK;
+    cell.style = Style::new(Some(Color::WHITE), Some(Color::BLACK), Attributes::empty());
     cell
 }
 

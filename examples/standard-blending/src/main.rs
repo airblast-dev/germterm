@@ -5,7 +5,8 @@ use germterm::{
     engine::{Engine, end_frame, exit_cleanup, init, start_frame},
     input::poll_input,
     layer::{LayerIndex, create_layer},
-    rich_text::{Attributes, RichText},
+    rich_text::RichText,
+    style::Attributes,
 };
 use std::io;
 
@@ -94,7 +95,7 @@ fn draw_test_cases(engine: &mut Engine, layer: LayerIndex, x: i16, y: i16, game_
         x + 2,
         y + 3,
         RichText::new("ab")
-            .with_fg(Color::WHITE)
+            .with_fg(Some(Color::WHITE))
             .with_attributes(Attributes::BOLD),
     );
 
@@ -107,7 +108,7 @@ fn draw_test_cases(engine: &mut Engine, layer: LayerIndex, x: i16, y: i16, game_
         x + 4,
         y + 2,
         RichText::new("ab")
-            .with_fg(Color::BLACK)
+            .with_fg(Some(Color::BLACK))
             .with_attributes(Attributes::BOLD),
     );
 
@@ -138,7 +139,7 @@ fn draw_test_cases(engine: &mut Engine, layer: LayerIndex, x: i16, y: i16, game_
         layer,
         x + 18,
         y + 2,
-        RichText::new("1234").with_fg(Color::RED),
+        RichText::new("1234").with_fg(Some(Color::RED)),
     );
     draw_rect(
         engine,
@@ -158,7 +159,7 @@ fn draw_test_cases(engine: &mut Engine, layer: LayerIndex, x: i16, y: i16, game_
         x + 26,
         y + 2,
         RichText::new("wxyz")
-            .with_fg(Color::GREEN)
+            .with_fg(Some(Color::GREEN))
             .with_attributes(Attributes::BOLD),
     );
     draw_rect(engine, layer, x + 28, y + 1, 4, 2, Color::BLUE);
@@ -171,7 +172,7 @@ fn draw_test_cases(engine: &mut Engine, layer: LayerIndex, x: i16, y: i16, game_
         x + 34,
         y + 2,
         RichText::new("abcd")
-            .with_fg(Color::RED)
+            .with_fg(Some(Color::RED))
             .with_attributes(Attributes::BOLD),
     );
     draw_text(
@@ -180,7 +181,7 @@ fn draw_test_cases(engine: &mut Engine, layer: LayerIndex, x: i16, y: i16, game_
         x + 34,
         y + 3,
         RichText::new("abcd")
-            .with_fg(Color::RED.with_alpha(127))
+            .with_fg(Some(Color::RED.with_alpha(127)))
             .with_attributes(Attributes::BOLD),
     );
 
@@ -196,7 +197,7 @@ fn draw_test_cases(engine: &mut Engine, layer: LayerIndex, x: i16, y: i16, game_
         x + 2,
         y + 6,
         RichText::new("xxxx")
-            .with_fg(Color::RED)
+            .with_fg(Some(Color::RED))
             .with_attributes(Attributes::BOLD),
     );
     draw_text(
@@ -205,7 +206,7 @@ fn draw_test_cases(engine: &mut Engine, layer: LayerIndex, x: i16, y: i16, game_
         x + 2,
         y + 6,
         RichText::new("o o")
-            .with_fg(Color::GREEN.with_alpha(t_byte))
+            .with_fg(Some(Color::GREEN.with_alpha(t_byte)))
             .with_attributes(Attributes::BOLD),
     );
 
@@ -216,7 +217,7 @@ fn draw_test_cases(engine: &mut Engine, layer: LayerIndex, x: i16, y: i16, game_
         x + 10,
         y + 6,
         RichText::new("boop")
-            .with_fg(Color::VIOLET.with_alpha(t_byte))
+            .with_fg(Some(Color::VIOLET.with_alpha(t_byte)))
             .with_attributes(Attributes::BOLD),
     );
 
@@ -227,8 +228,8 @@ fn draw_test_cases(engine: &mut Engine, layer: LayerIndex, x: i16, y: i16, game_
         x + 18,
         y + 6,
         RichText::new("bonk")
-            .with_fg(Color::GREEN.with_alpha(t_byte))
-            .with_bg(Color::DARK_GREEN)
+            .with_fg(Some(Color::GREEN.with_alpha(t_byte)))
+            .with_bg(Some(Color::DARK_GREEN))
             .with_attributes(Attributes::BOLD),
     );
 
@@ -239,8 +240,8 @@ fn draw_test_cases(engine: &mut Engine, layer: LayerIndex, x: i16, y: i16, game_
         x + 26,
         y + 6,
         RichText::new("bang")
-            .with_fg(Color::RED.with_alpha(t_byte))
-            .with_bg(Color::GREEN.with_alpha(30))
+            .with_fg(Some(Color::RED.with_alpha(t_byte)))
+            .with_bg(Some(Color::GREEN.with_alpha(30)))
             .with_attributes(Attributes::BOLD),
     );
 
@@ -257,7 +258,7 @@ fn draw_test_cases(engine: &mut Engine, layer: LayerIndex, x: i16, y: i16, game_
         x + 34,
         y + 6,
         RichText::new("xxxx")
-            .with_fg(Color::RED.with_alpha(127))
+            .with_fg(Some(Color::RED.with_alpha(127)))
             .with_attributes(Attributes::BOLD),
     );
     draw_text(
@@ -266,7 +267,7 @@ fn draw_test_cases(engine: &mut Engine, layer: LayerIndex, x: i16, y: i16, game_
         x + 34,
         y + 6,
         RichText::new("o o")
-            .with_fg(Color::WHITE.with_alpha(t_byte))
+            .with_fg(Some(Color::WHITE.with_alpha(t_byte)))
             .with_attributes(Attributes::BOLD),
     );
 }

@@ -7,7 +7,8 @@ use germterm::{
     input::poll_input,
     layer::{LayerIndex, create_layer},
     particle::{ParticleColor, ParticleEmitter, ParticleSpec, spawn_particles},
-    rich_text::{Attributes, RichText},
+    rich_text::RichText,
+    style::Attributes,
 };
 use rand::{Rng, rngs::ThreadRng};
 use std::io;
@@ -200,7 +201,7 @@ fn main() -> io::Result<()> {
             10,
             1,
             RichText::new(fps_text)
-                .with_fg(Color(0x45475aff))
+                .with_fg(Some(Color(0x45475aff)))
                 .with_attributes(Attributes::BOLD),
         );
 
@@ -211,7 +212,7 @@ fn main() -> io::Result<()> {
                 (TERM_COLS / 2 - 6) as i16,
                 (TERM_ROWS / 2 - 1) as i16,
                 RichText::new("GAME OVER!")
-                    .with_fg(Color::RED)
+                    .with_fg(Some(Color::RED))
                     .with_attributes(Attributes::BOLD),
             );
         }

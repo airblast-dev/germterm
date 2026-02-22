@@ -1,4 +1,7 @@
-use crate::{color::Color, rich_text::Attributes};
+use crate::{
+    color::Color,
+    style::{Attributes, Style},
+};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum CellFormat {
@@ -11,20 +14,14 @@ pub enum CellFormat {
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub struct Cell {
     pub ch: char,
-    pub fg: Color,
-    pub bg: Color,
-    pub attributes: Attributes,
+    pub style: Style,
     pub format: CellFormat,
 }
 
 impl Cell {
     pub const EMPTY: Cell = Cell {
         ch: ' ',
-        fg: Color::CLEAR,
-        bg: Color::CLEAR,
-        attributes: Attributes::from_bits_truncate(
-            Attributes::NO_FG_COLOR.bits() | Attributes::NO_BG_COLOR.bits(),
-        ),
+        style: Style::EMPTY,
         format: CellFormat::Standard,
     };
 }

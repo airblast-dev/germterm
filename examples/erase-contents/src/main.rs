@@ -44,7 +44,7 @@ fn main() -> io::Result<()> {
                 0,
                 y_offset as i16,
                 RichText::new(text.repeat(TERM_COLS as usize / 2))
-                    .with_fg(Color::new(80, 80, 80, 255)),
+                    .with_fg(Some(Color::new(80, 80, 80, 255))),
             );
         }
 

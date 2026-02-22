@@ -63,7 +63,7 @@ fn draw_test_case(engine: &mut Engine, layer: LayerIndex, x: f32, y: f32) {
         layer,
         x as i16,
         y as i16,
-        RichText::new("1").with_fg(Color::DARK_GRAY),
+        RichText::new("1").with_fg(Some(Color::DARK_GRAY)),
     );
 
     draw_twoxel(engine, layer, x, y + 2.0, Color::RED);
@@ -82,7 +82,7 @@ fn draw_test_case(engine: &mut Engine, layer: LayerIndex, x: f32, y: f32) {
         layer,
         x as i16 + 2,
         y as i16,
-        RichText::new("2").with_fg(Color::DARK_GRAY),
+        RichText::new("2").with_fg(Some(Color::DARK_GRAY)),
     );
 
     draw_twoxel(engine, layer, x + 2.0, y + 2.5, Color::GREEN);
@@ -101,7 +101,7 @@ fn draw_test_case(engine: &mut Engine, layer: LayerIndex, x: f32, y: f32) {
         layer,
         x as i16 + 4,
         y as i16,
-        RichText::new("3").with_fg(Color::DARK_GRAY),
+        RichText::new("3").with_fg(Some(Color::DARK_GRAY)),
     );
 
     draw_twoxel(engine, layer, x + 4.0, y + 2.0, Color::RED);
@@ -128,7 +128,7 @@ fn draw_test_case(engine: &mut Engine, layer: LayerIndex, x: f32, y: f32) {
         layer,
         x as i16 + 6,
         y as i16,
-        RichText::new("4").with_fg(Color::DARK_GRAY),
+        RichText::new("4").with_fg(Some(Color::DARK_GRAY)),
     );
 
     draw_twoxel(engine, layer, x + 6.0, y + 2.0, Color::RED);
@@ -163,7 +163,7 @@ fn draw_test_case(engine: &mut Engine, layer: LayerIndex, x: f32, y: f32) {
         layer,
         x as i16 + 8,
         y as i16,
-        RichText::new("5").with_fg(Color::DARK_GRAY),
+        RichText::new("5").with_fg(Some(Color::DARK_GRAY)),
     );
 
     draw_twoxel(engine, layer, x + 8.0, y + 2.0, Color::RED);
@@ -198,7 +198,7 @@ fn draw_test_case(engine: &mut Engine, layer: LayerIndex, x: f32, y: f32) {
         layer,
         x as i16 + 10,
         y as i16,
-        RichText::new("6").with_fg(Color::DARK_GRAY),
+        RichText::new("6").with_fg(Some(Color::DARK_GRAY)),
     );
 
     draw_twoxel(engine, layer, x + 10.0, y + 2.5, Color::GREEN);
@@ -233,7 +233,7 @@ fn draw_test_case(engine: &mut Engine, layer: LayerIndex, x: f32, y: f32) {
         layer,
         x as i16 + 12,
         y as i16,
-        RichText::new("7").with_fg(Color::DARK_GRAY),
+        RichText::new("7").with_fg(Some(Color::DARK_GRAY)),
     );
 
     draw_twoxel(engine, layer, x + 12.0, y + 2.5, Color::GREEN);
@@ -268,7 +268,7 @@ fn draw_test_case(engine: &mut Engine, layer: LayerIndex, x: f32, y: f32) {
         layer,
         x as i16 - 10,
         y as i16 + 2,
-        RichText::new("Composed:").with_fg(Color::DARK_GRAY),
+        RichText::new("Composed:").with_fg(Some(Color::DARK_GRAY)),
     );
 
     draw_text(
@@ -276,7 +276,7 @@ fn draw_test_case(engine: &mut Engine, layer: LayerIndex, x: f32, y: f32) {
         layer,
         x as i16 - 11,
         y as i16 + 4,
-        RichText::new("Low alpha:").with_fg(Color::DARK_GRAY),
+        RichText::new("Low alpha:").with_fg(Some(Color::DARK_GRAY)),
     );
 
     draw_text(
@@ -284,7 +284,7 @@ fn draw_test_case(engine: &mut Engine, layer: LayerIndex, x: f32, y: f32) {
         layer,
         x as i16 - 10,
         y as i16 + 6,
-        RichText::new("Expected:").with_fg(Color::DARK_GRAY),
+        RichText::new("Expected:").with_fg(Some(Color::DARK_GRAY)),
     );
 
     draw_text(
@@ -292,7 +292,7 @@ fn draw_test_case(engine: &mut Engine, layer: LayerIndex, x: f32, y: f32) {
         layer,
         x as i16 - 2,
         y as i16 + 5,
-        RichText::new("-----------------").with_fg(Color::DARK_GRAY),
+        RichText::new("-----------------").with_fg(Some(Color::DARK_GRAY)),
     );
     // 1.
     draw_text(
@@ -300,7 +300,7 @@ fn draw_test_case(engine: &mut Engine, layer: LayerIndex, x: f32, y: f32) {
         layer,
         x as i16,
         y as i16 + 6,
-        RichText::new("▀").with_fg(Color::RED),
+        RichText::new("▀").with_fg(Some(Color::RED)),
     );
     // 2.
     draw_text(
@@ -308,7 +308,7 @@ fn draw_test_case(engine: &mut Engine, layer: LayerIndex, x: f32, y: f32) {
         layer,
         x as i16 + 2,
         y as i16 + 6,
-        RichText::new("▄").with_fg(Color::GREEN),
+        RichText::new("▄").with_fg(Some(Color::GREEN)),
     );
     // 3.
     draw_text(
@@ -316,7 +316,9 @@ fn draw_test_case(engine: &mut Engine, layer: LayerIndex, x: f32, y: f32) {
         layer,
         x as i16 + 4,
         y as i16 + 6,
-        RichText::new("▀").with_fg(Color::RED).with_bg(Color::GREEN),
+        RichText::new("▀")
+            .with_fg(Some(Color::RED))
+            .with_bg(Some(Color::GREEN)),
         // 4.
     );
     draw_text(
@@ -325,8 +327,8 @@ fn draw_test_case(engine: &mut Engine, layer: LayerIndex, x: f32, y: f32) {
         x as i16 + 6,
         y as i16 + 6,
         RichText::new("▀")
-            .with_fg(Color::LIGHT_GRAY)
-            .with_bg(Color::GREEN),
+            .with_fg(Some(Color::LIGHT_GRAY))
+            .with_bg(Some(Color::GREEN)),
     );
     // 5.
     draw_text(
@@ -335,8 +337,8 @@ fn draw_test_case(engine: &mut Engine, layer: LayerIndex, x: f32, y: f32) {
         x as i16 + 8,
         y as i16 + 6,
         RichText::new("▀")
-            .with_fg(Color::RED)
-            .with_bg(Color::LIGHT_GRAY),
+            .with_fg(Some(Color::RED))
+            .with_bg(Some(Color::LIGHT_GRAY)),
     );
     // 6.
     draw_text(
@@ -345,8 +347,8 @@ fn draw_test_case(engine: &mut Engine, layer: LayerIndex, x: f32, y: f32) {
         x as i16 + 10,
         y as i16 + 6,
         RichText::new("▄")
-            .with_fg(Color::GREEN)
-            .with_bg(Color::LIGHT_GRAY),
+            .with_fg(Some(Color::GREEN))
+            .with_bg(Some(Color::LIGHT_GRAY)),
     );
     // 7.
     draw_text(
@@ -355,7 +357,7 @@ fn draw_test_case(engine: &mut Engine, layer: LayerIndex, x: f32, y: f32) {
         x as i16 + 12,
         y as i16 + 6,
         RichText::new("▄")
-            .with_fg(Color::LIGHT_GRAY)
-            .with_bg(Color::RED),
+            .with_fg(Some(Color::LIGHT_GRAY))
+            .with_bg(Some(Color::RED)),
     );
 }
