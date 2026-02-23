@@ -31,3 +31,50 @@ pub fn dump_buffer_to_string(buffer: &dyn Buffer) -> String {
     let _ = dump_buffer(buffer, &mut result);
     String::from_utf8(result).unwrap_or_default()
 }
+
+#[macro_export]
+macro_rules! buf_str {
+    ($($line:literal),+ $(,)?) => {
+        {
+            use $crate::bbq_inner as b;
+            b!($($line)+)
+        }
+    };
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! bbq_inner {
+    ($single:literal) => {{$single}};
+    ($first:literal $($rest:tt)*) => {{
+        #[allow(unused)]
+        use ::core::{concat as c, assert as a};
+        const L: usize = $first.len();
+        b!([$first, "\n"] $($rest)*)
+    }};
+    ([$($loaded:literal),+] $next:literal $($rest:tt)+) => {{
+        const _: () = a!(L == $next.len());
+        b!([$($loaded),+, $next, "\n"] $($rest)+)
+    }};
+    ([$($loaded:literal),+] $last:literal) => {
+        c!($($loaded),+, $last)
+    };
+}
+
+// TODO: use trybuild for testing different length strings failing
+#[cfg(test)]
+mod tests {
+    #[rustfmt::skip]
+    const FOUND: &str = crate::buf_str!(
+        "1234567", 
+        "ABCDEFG", 
+        "!@#$%^&",
+    );
+
+    const EXPECTED: &str = "1234567\nABCDEFG\n!@#$%^&";
+
+    #[test]
+    fn buffer_literal_formats_correctly() {
+        assert_eq!(FOUND, EXPECTED);
+    }
+}
