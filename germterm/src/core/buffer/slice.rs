@@ -133,6 +133,10 @@ impl<'a, Buf: Buffer + ?Sized> SubBuffer<'a, Buf> {
     }
 }
 
+#[cold]
+#[inline(never)]
+fn cold() {}
+
 impl<Buf: Buffer + ?Sized> Buffer for SubBuffer<'_, Buf> {
     fn size(&self) -> Size {
         self.area.size
@@ -143,12 +147,24 @@ impl<Buf: Buffer + ?Sized> Buffer for SubBuffer<'_, Buf> {
         pos: Position,
         cell: Cell,
     ) -> Result<(), super::ErrorOutOfBoundsAxises> {
-        let translated = self.translate(pos)?;
+        let translated = match self.translate(pos) {
+            Ok(it) => it,
+            Err(err) => {
+                cold();
+                return Err(err);
+            }
+        };
         self.inner.set_cell_checked(translated, cell)
     }
 
     fn get_cell_checked(&self, pos: Position) -> Result<&Cell, super::ErrorOutOfBoundsAxises> {
-        let translated = self.translate(pos)?;
+        let translated = match self.translate(pos) {
+            Ok(it) => it,
+            Err(err) => {
+                cold();
+                return Err(err);
+            }
+        };
         self.inner.get_cell_checked(translated)
     }
 
@@ -156,7 +172,13 @@ impl<Buf: Buffer + ?Sized> Buffer for SubBuffer<'_, Buf> {
         &mut self,
         pos: Position,
     ) -> Result<&mut Cell, super::ErrorOutOfBoundsAxises> {
-        let translated = self.translate(pos)?;
+        let translated = match self.translate(pos) {
+            Ok(it) => it,
+            Err(err) => {
+                cold();
+                return Err(err);
+            }
+        };
         self.inner.get_cell_mut_checked(translated)
     }
 }
@@ -300,8 +322,7 @@ mod tests {
         fn get_cell_mut_checked(
             &mut self,
             pos: Position,
-        ) -> Result<&mut crate::cell::Cell, crate::core::buffer::ErrorOutOfBoundsAxises>
-        {
+        ) -> Result<&mut crate::cell::Cell, crate::core::buffer::ErrorOutOfBoundsAxises> {
             self.0.get_cell_mut_checked(pos)
         }
     }

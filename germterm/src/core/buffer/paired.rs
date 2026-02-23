@@ -68,6 +68,10 @@ impl PairedBuffer {
     }
 }
 
+#[cold]
+#[inline(never)]
+fn cold() {}
+
 impl Buffer for PairedBuffer {
     fn size(&self) -> Size {
         self.size
@@ -78,14 +82,21 @@ impl Buffer for PairedBuffer {
         pos: Position,
         cell: Cell,
     ) -> Result<(), super::ErrorOutOfBoundsAxises> {
-        self.size.contains(pos)?;
+        if let err @ Err(_) = self.size.contains(pos) {
+            cold();
+            return err;
+        }
+
         let cur = self.index_current();
         self.frames[pos.to_index(self.size.width)][cur] = cell;
         Ok(())
     }
 
     fn get_cell_checked(&self, pos: Position) -> Result<&Cell, super::ErrorOutOfBoundsAxises> {
-        self.size.contains(pos)?;
+        if let Err(err) = self.size.contains(pos) {
+            cold();
+            return Err(err);
+        }
         Ok(&self.frames[pos.to_index(self.size.width)][self.index_current()])
     }
 
@@ -93,7 +104,10 @@ impl Buffer for PairedBuffer {
         &mut self,
         pos: Position,
     ) -> Result<&mut Cell, super::ErrorOutOfBoundsAxises> {
-        self.size.contains(pos)?;
+        if let Err(err) = self.size.contains(pos) {
+            cold();
+            return Err(err);
+        }
         let cur = self.index_current();
         Ok(&mut self.frames[pos.to_index(self.size.width)][cur])
     }

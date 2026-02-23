@@ -30,6 +30,10 @@ impl FlatBuffer {
     }
 }
 
+#[cold]
+#[inline(never)]
+fn cold() {}
+
 impl Buffer for FlatBuffer {
     fn size(&self) -> Size {
         self.size
@@ -40,18 +44,27 @@ impl Buffer for FlatBuffer {
         pos: Position,
         cell: Cell,
     ) -> Result<(), ErrorOutOfBoundsAxises> {
-        self.size.contains(pos)?;
+        if let err @ Err(_) = self.size.contains(pos) {
+            cold();
+            return err;
+        }
         self.cells[pos.to_index(self.size.width)] = cell;
         Ok(())
     }
 
     fn get_cell_checked(&self, pos: Position) -> Result<&Cell, ErrorOutOfBoundsAxises> {
-        self.size.contains(pos)?;
+        if let Err(err) = self.size.contains(pos) {
+            cold();
+            return Err(err);
+        }
         Ok(&self.cells[pos.to_index(self.size.width)])
     }
 
     fn get_cell_mut_checked(&mut self, pos: Position) -> Result<&mut Cell, ErrorOutOfBoundsAxises> {
-        self.size.contains(pos)?;
+        if let Err(err) = self.size.contains(pos) {
+            cold();
+            return Err(err);
+        }
         Ok(&mut self.cells[pos.to_index(self.size.width)])
     }
 
