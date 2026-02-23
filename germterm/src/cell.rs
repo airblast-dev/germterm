@@ -30,6 +30,7 @@ impl Cell {
 
     pub fn merge(&mut self, other: Self) {
         self.ch = other.ch;
+        // TODO: use [`Style`] and call its merge instead beyond this point
         self.attributes |= other.attributes;
         if !other.attributes.contains(Attributes::NO_FG_COLOR) {
             self.attributes &= !Attributes::NO_FG_COLOR;
