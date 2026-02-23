@@ -107,11 +107,18 @@ impl Style {
         self
     }
 
-    pub fn merge(self, other: Self) -> Self {
+    pub fn merged(self, other: Self) -> Self {
         Self::EMPTY
             .set_fg(other.fg().or(self.fg()))
             .set_bg(other.bg().or(self.bg()))
             .set_attributes(other.attributes() | self.attributes())
+    }
+
+    pub fn merge(&mut self, other: Self) {
+        *self = Self::EMPTY
+            .set_fg(other.fg().or(self.fg()))
+            .set_bg(other.bg().or(self.bg()))
+            .set_attributes(other.attributes() | self.attributes());
     }
 }
 

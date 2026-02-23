@@ -27,4 +27,17 @@ impl Cell {
         ),
         format: CellFormat::Standard,
     };
+
+    pub fn merge(&mut self, other: Self) {
+        self.ch = other.ch;
+        self.attributes |= other.attributes;
+        if !other.attributes.contains(Attributes::NO_FG_COLOR) {
+            self.attributes &= !Attributes::NO_FG_COLOR;
+            self.fg = other.fg;
+        }
+        if !other.attributes.contains(Attributes::NO_BG_COLOR) {
+            self.attributes &= !Attributes::NO_BG_COLOR;
+            self.bg = other.bg;
+        }
+    }
 }
