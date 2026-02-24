@@ -156,15 +156,15 @@ impl ResizableBuffer for PairedBuffer {
 impl Drawer for PairedBuffer {
     fn draw(&mut self) -> impl Iterator<Item = DrawCall<'_>> {
         let cur_idx = self.index_current();
-        let height = self.size.height as usize;
+        let width = self.size.width as usize;
 
         let s: &Self = self;
         assert_eq!(self.size.area(), self.frames.len() as u32);
         (0..(self.frames.len())).filter_map(move |i| {
             let lr @ [l, r] = unsafe { s.frames.get_unchecked(i) };
             if l != r {
-                let x = (i % height) as u16;
-                let y = (i / height) as u16;
+                let x = (i % width) as u16;
+                let y = (i / width) as u16;
                 Some(DrawCall {
                     pos: Position { x, y },
                     cell: unsafe { lr.get_unchecked(cur_idx) },
