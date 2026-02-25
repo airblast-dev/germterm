@@ -1,7 +1,59 @@
-use crate::{core::widget::text::span::Span, style::Style};
+use crate::{
+    core::{
+        buffer::slice::SubBuffer,
+        draw::{Position, Rect},
+        timer::NoDelta,
+        widget::{text::span::Span, FrameContext, Widget},
+    },
+    style::Style,
+};
 
-#[derive(Clone, Debug)]
-struct Line<'a, Spans: IntoIterator<Item = Span<'a>> = Vec<Span<'a>>> {
-    spans: Spans,
+/// A widget that renders a single line composed of one or more [`Span`]s.
+///
+/// Each span carries its own [`Style`], so a single `Line` can display
+/// multiple colors, backgrounds, and text attributes on one row.
+///
+/// # Lifetimes
+///
+/// * `'s` — the borrow of the span slice.
+/// * `'c` — the lifetime of the text content inside each [`Span`].
+#[derive(Debug)]
+pub struct Line<'s, 'c, Spans: ?Sized = [Span<'c>]>
+where
+    for<'b> &'b mut Spans: IntoIterator<Item = &'b mut Span<'c>>,
+{
+    spans: &'s mut Spans,
     style: Style,
+}
+
+impl<'s, 'c> Line<'s, 'c> {
+    /// Creates a new `Line` from a mutable slice of [`Span`]s and an
+    /// optional base [`Style`].
+    pub fn new(spans: &'s mut [Span<'c>], style: Style) -> Self {
+        Self { spans, style }
+    }
+}
+
+impl Widget<NoDelta> for Line<'_, '_> {
+    fn draw(&mut self, ctx: &mut FrameContext<'_, impl crate::core::buffer::Buffer, NoDelta>) {
+        let buf = ctx.buffer_mut();
+        let sz = buf.size();
+
+        if sz.area() == 0 {
+            return;
+        }
+
+        let mut offset = 0;
+        for span in self.spans.iter_mut() {
+            offset = span
+                .fill_cells(
+                    &mut SubBuffer::new(buf, Rect::new(Position::new(offset, 0), sz)),
+                    sz.width - offset,
+                )
+                .saturating_add(offset);
+            if offset >= sz.width {
+                break;
+            }
+        }
+    }
 }

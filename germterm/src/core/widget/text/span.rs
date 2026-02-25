@@ -1,17 +1,20 @@
 use std::borrow::Cow;
 
 use crate::{
+    cell::Cell,
+    color::Color,
     core::{
         buffer::Buffer,
-        draw::{Position, gfx::text::draw_string},
+        draw::Position,
         timer::NoDelta,
-        widget::Widget,
+        widget::{FrameContext, Widget},
     },
     style::Style,
 };
 
+#[derive(Clone)]
 pub struct Span<'a> {
-    content: Cow<'a, str>,
+    pub(crate) content: Cow<'a, str>,
     style: Style,
 }
 
@@ -69,7 +72,8 @@ impl<'a> Span<'a> {
     ///
     /// This is mainly intended to be called from other [`Widget`]'s where they would account for
     /// line wrapping themselves. In other words this is a primitive text drawer in widget form.
-    pub fn fill_cells<Buf: Buffer>(&self, buf: &mut Buf, limit: u32) -> u32 {
+    pub fn fill_cells<Buf: Buffer>(&self, buf: &mut Buf, limit: u16) -> u16 {
+        let limit = limit as u32;
         let sz = buf.size();
         let mut chars = self.content.chars();
         let mut written = 0;
@@ -78,8 +82,14 @@ impl<'a> Span<'a> {
                 let c = buf.get_cell_mut(Position::new(x, y));
                 written = sz.width as u32 * y as u32 + x as u32;
                 // TODO: add cell merging once cell styling is stored
-                todo!();
                 if let Some(ch) = chars.next() {
+                    c.merge(Cell {
+                        ch,
+                        fg: self.style.fg().unwrap_or(Color::CLEAR),
+                        bg: self.style.bg().unwrap_or(Color::CLEAR),
+                        attributes: self.style.attributes(),
+                        format: c.format,
+                    });
                     c.ch = ch;
                     if written >= limit {
                         break;
@@ -90,15 +100,19 @@ impl<'a> Span<'a> {
             }
         }
 
-        written
+        written as u16
+    }
+
+    pub fn as_borrowed(&'a self) -> Span<'a> {
+        Self {
+            content: Cow::Borrowed(self.content.as_ref()),
+            style: self.style,
+        }
     }
 }
 
 impl<'a> Widget<NoDelta> for Span<'a> {
-    fn draw(
-        &mut self,
-        ctx: crate::core::widget::FrameContext<'_, impl crate::core::buffer::Buffer, NoDelta>,
-    ) {
-        self.fill_cells(ctx.buffer, ctx.buffer.size().width as u32);
+    fn draw(&mut self, ctx: &mut FrameContext<'_, impl crate::core::buffer::Buffer, NoDelta>) {
+        self.fill_cells(ctx.buffer, ctx.buffer.size().width);
     }
 }

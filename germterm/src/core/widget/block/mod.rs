@@ -3,10 +3,10 @@ pub mod set;
 use std::marker::PhantomData;
 
 use crate::core::{
-    buffer::{slice::SubBuffer, Buffer},
+    buffer::{Buffer, slice::SubBuffer},
     draw::{Position, Rect},
     timer::TimerDelta,
-    widget::{block::set::BlockSet, FrameContext, Widget},
+    widget::{FrameContext, Widget, block::set::BlockSet},
 };
 
 pub struct Block<D: TimerDelta, W: Widget<D>, B> {
@@ -26,7 +26,7 @@ impl<D: TimerDelta, W: Widget<D>, B> Block<D, W, B> {
 }
 
 impl<D: TimerDelta, W: Widget<D>, B: BlockSet> Widget<D> for Block<D, W, B> {
-    fn draw(&mut self, mut ctx: FrameContext<'_, impl Buffer, D>) {
+    fn draw(&mut self, mut ctx: &mut FrameContext<'_, impl Buffer, D>) {
         let size = ctx.buffer().size();
         if size.width == 0 || size.height == 0 {
             return;
@@ -147,7 +147,7 @@ impl<D: TimerDelta, W: Widget<D>, B: BlockSet> Widget<D> for Block<D, W, B> {
         }
 
         if size.width > 2 && size.height > 2 {
-            self.widget.draw(FrameContext {
+            self.widget.draw(&mut FrameContext {
                 total_time,
                 delta,
                 buffer: &mut SubBuffer::new(
@@ -169,20 +169,20 @@ mod tests {
 
     struct EmptyWidget;
     impl Widget<NoDelta> for EmptyWidget {
-        fn draw(&mut self, _ctx: FrameContext<'_, impl Buffer, NoDelta>) {}
+        fn draw(&mut self, _ctx: &mut FrameContext<'_, impl Buffer, NoDelta>) {}
     }
 
     #[test]
     fn test_block_draw_borders() {
         let mut buf = PairedBuffer::new(Size::new(3, 3));
         let mut block = Block::new(EmptyWidget, SimpleBorderSet::ASCII);
-        let ctx = FrameContext {
+        let mut ctx = FrameContext {
             total_time: NoDelta::new(),
             delta: NoDelta::new(),
             buffer: &mut buf,
         };
 
-        block.draw(ctx);
+        block.draw(&mut ctx);
 
         // Ascii style: top_left='+', top='-', top_right='+', left='|', right='|', bottom_left='+', bottom='-', bottom_right='+'
         assert_eq!(buf.get_cell(Position::new(0, 0)).ch, '+');
@@ -205,7 +205,7 @@ mod tests {
             drawn: Rc<Cell<bool>>,
         }
         impl Widget<NoDelta> for SpyWidget {
-            fn draw(&mut self, _ctx: FrameContext<'_, impl Buffer, NoDelta>) {
+            fn draw(&mut self, _ctx: &mut FrameContext<'_, impl Buffer, NoDelta>) {
                 self.drawn.set(true);
             }
         }
@@ -216,13 +216,13 @@ mod tests {
             drawn: drawn.clone(),
         };
         let mut block = Block::new(spy, SimpleBorderSet::ASCII);
-        let ctx = FrameContext {
+        let mut ctx = FrameContext {
             total_time: NoDelta::new(),
             delta: NoDelta::new(),
             buffer: &mut buf,
         };
 
-        block.draw(ctx);
+        block.draw(&mut ctx);
 
         assert!(drawn.get());
     }
