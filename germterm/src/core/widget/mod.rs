@@ -41,7 +41,16 @@ impl<Buf: Buffer + ?Sized, Delta: TimerDelta> FrameContext<'_, Buf, Delta> {
     }
 }
 
-impl<Buf: Buffer + ?Sized, Delta> FrameContext<'_, Buf, Delta> {
+impl<'a, Buf: Buffer + ?Sized, Delta> FrameContext<'a, Buf, Delta> {
+    /// Creates a new `FrameContext`.
+    pub fn new(total_time: Delta, delta: Delta, buffer: &'a mut Buf) -> Self {
+        Self {
+            total_time,
+            delta,
+            buffer,
+        }
+    }
+
     #[inline(always)]
     pub fn buffer(&self) -> &Buf {
         self.buffer
