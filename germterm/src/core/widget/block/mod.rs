@@ -3,10 +3,10 @@ pub mod set;
 use std::marker::PhantomData;
 
 use crate::core::{
-    buffer::{Buffer, slice::SubBuffer},
+    buffer::{slice::SubBuffer, Buffer},
     draw::{Position, Rect},
     timer::TimerDelta,
-    widget::{FrameContext, Widget, block::set::BlockSet},
+    widget::{block::set::BlockSet, FrameContext, Widget},
 };
 
 pub struct Block<D: TimerDelta, W: Widget<D>, B> {
@@ -35,6 +35,7 @@ impl<D: TimerDelta, W: Widget<D>, B: BlockSet> Widget<D> for Block<D, W, B> {
         let delta = ctx.delta;
         let total_time = ctx.total_time;
         let buf = ctx.buffer_mut();
+        let x_end = size.width.saturating_sub(1).max(1);
 
         // top left corner
         {
@@ -49,7 +50,7 @@ impl<D: TimerDelta, W: Widget<D>, B: BlockSet> Widget<D> for Block<D, W, B> {
 
         // top side
         if size.width > 2 {
-            for x in 1..size.width {
+            for x in 1..x_end {
                 let cur = buf.get_cell_mut(Position { x, y: 0 });
                 cur.ch = self
                     .border_set
@@ -76,8 +77,9 @@ impl<D: TimerDelta, W: Widget<D>, B: BlockSet> Widget<D> for Block<D, W, B> {
 
         // LR sides
         if size.height > 2 {
+            let h_end = size.height.saturating_sub(1).max(1);
             // Left side
-            for y in 1..size.height {
+            for y in 1..h_end {
                 let cur = buf.get_cell_mut(Position { x: 0, y });
                 cur.ch = self
                     .border_set
@@ -88,7 +90,7 @@ impl<D: TimerDelta, W: Widget<D>, B: BlockSet> Widget<D> for Block<D, W, B> {
             }
 
             // Right side
-            for y in 1..size.height {
+            for y in 1..h_end {
                 let cur = buf.get_cell_mut(Position {
                     x: size.width - 1,
                     y,
@@ -119,7 +121,7 @@ impl<D: TimerDelta, W: Widget<D>, B: BlockSet> Widget<D> for Block<D, W, B> {
         // bottom
         if size.width > 2 {
             let y = size.height - 1;
-            for x in 1..size.width {
+            for x in 1..x_end {
                 let cur = buf.get_cell_mut(Position { x, y });
                 cur.ch = self
                     .border_set
