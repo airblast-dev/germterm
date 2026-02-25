@@ -72,6 +72,9 @@ pub fn draw_hline<Buf: Buffer>(buf: &mut Buf, start: Position, len: u16, cell: C
 /// The number of cells written.
 pub fn draw_line<Buf: Buffer>(buf: &mut Buf, start: Position, end: Position, cell: Cell) -> u32 {
     let sz = buf.size();
+    if sz.area() == 0 {
+        return 0;
+    }
 
     // Always draw top-to-bottom (left-to-right when horizontal) so that
     // dy >= 0 and swapping start/end gives identical output.
