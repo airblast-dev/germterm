@@ -26,7 +26,7 @@ impl<D: TimerDelta, W: Widget<D>, B> Block<D, W, B> {
 }
 
 impl<D: TimerDelta, W: Widget<D>, B: BlockSet> Widget<D> for Block<D, W, B> {
-    fn draw(&mut self, mut ctx: &mut FrameContext<'_, impl Buffer, D>) {
+    fn draw(&mut self, ctx: &mut FrameContext<'_, impl Buffer, D>) {
         let size = ctx.buffer().size();
         if size.width == 0 || size.height == 0 {
             return;
