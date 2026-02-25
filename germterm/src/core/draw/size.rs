@@ -1,4 +1,4 @@
-use crate::core::buffer::ErrorOutOfBoundsAxises;
+use crate::core::{buffer::ErrorOutOfBoundsAxises, draw::Rect};
 
 use super::Position;
 
@@ -22,7 +22,7 @@ impl Size {
     ///
     /// Returns `Ok(())` if `pos.x < width` and `pos.y < height`.
     /// Otherwise returns an error indicating which axes are out of bounds.
-    pub fn contains(&self, pos: Position) -> Result<(), ErrorOutOfBoundsAxises> {
+    pub fn contains(self, pos: Position) -> Result<(), ErrorOutOfBoundsAxises> {
         let err = match pos {
             Position { x, y } if x >= self.width && y >= self.height => ErrorOutOfBoundsAxises::XY,
             Position { x, y } if y >= self.height => ErrorOutOfBoundsAxises::Y,
@@ -49,7 +49,7 @@ impl Size {
     }
 
     /// Returns the total number of cells as `width * height`.
-    pub fn area(&self) -> u32 {
+    pub fn area(self) -> u32 {
         self.width as u32 * self.height as u32
     }
 
