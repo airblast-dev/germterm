@@ -10,6 +10,47 @@ use crate::{
     style::{Stylable, Style},
 };
 
+/// Creates a [`Span<'static>`](Span) from a string literal, verifying at compile time that it
+/// contains no ASCII control characters.
+///
+/// This is the preferred way to construct a `Span` from a constant string. Unlike
+/// [`Span::new`], which performs the validation at runtime and returns a `Result`, this macro
+/// runs the check in a `const` context so any invalid input is caught during compilation.
+///
+/// # Examples
+///
+/// ```
+/// use germterm::span;
+///
+/// let greeting = span!("Hello, world!");
+/// let styled   = span!("Error").with_fg(Color::RED).with_bold(true);
+/// ```
+///
+/// Strings that contain control characters will fail to compile:
+///
+/// ```compile_fail
+/// use germterm::span;
+///
+/// let bad = span!("line\nbreak"); // compile error: control character at index 4
+/// ```
+#[macro_export]
+macro_rules! span {
+    ($s:literal) => {{
+        use $crate::core::widget::text::span::Span;
+        const S: &'static str = $s;
+        const SP: Span<'static> = const {
+            let mut i = 0;
+            while i < S.len() {
+                assert!(!S.as_bytes()[i].is_ascii_control());
+                i += 1;
+            }
+            Span::new_unchecked($s)
+        };
+
+        SP
+    }};
+}
+
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Span<'a> {
     pub(crate) content: Cow<'a, str>,
@@ -39,7 +80,7 @@ impl<'a> Span<'a> {
         })
     }
 
-    pub const fn new_unchecked(content: &'static str) -> Self {
+    pub const fn new_unchecked(content: &'a str) -> Self {
         let content = Cow::Borrowed(content);
         Self {
             content,
