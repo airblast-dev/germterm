@@ -1,6 +1,10 @@
 use crate::{
     cell::Cell,
-    core::{buffer::{Buffer, slice::SubBuffer}, draw::{Position, Rect}}, style::Style,
+    core::{
+        buffer::{Buffer, slice::SubBuffer},
+        draw::{Position, Rect},
+    },
+    style::Style,
 };
 
 /// Draws a vertical line downward from `start` for up to `len` cells.
