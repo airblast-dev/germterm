@@ -50,6 +50,10 @@ impl<Timed: FrameTimer, Buf: Buffer> Engine<Timed, Buf> {
         self.timer.delta
     }
 
+    pub fn total_time(&self) -> Timed::Delta {
+        self.timer.total_time
+    }
+
     pub fn buffer(&self) -> &Buf {
         &self.buffer
     }
