@@ -7,7 +7,7 @@ use crate::{
         timer::NoDelta,
         widget::{FrameContext, Widget},
     },
-    style::Style,
+    style::{Stylable, Style},
 };
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -56,16 +56,6 @@ impl<'a> Span<'a> {
         &self.content
     }
 
-    pub fn style(&self) -> Style {
-        self.style
-    }
-
-    pub fn set_style(mut self, style: Style) -> Self {
-        self.style = style;
-
-        self
-    }
-
     /// Fills the cells in the provided buffer as much as possible without exceeding `limit` cells.
     ///
     /// This is mainly intended to be called from other [`Widget`]'s where they would account for
@@ -106,5 +96,15 @@ impl<'a> Span<'a> {
 impl<'a> Widget<NoDelta> for Span<'a> {
     fn draw(&mut self, ctx: &mut FrameContext<'_, impl crate::core::buffer::Buffer, NoDelta>) {
         self.fill_cells(ctx.buffer, ctx.buffer.size().width);
+    }
+}
+
+impl Stylable for Span<'_> {
+    fn style(&self) -> Style {
+        self.style
+    }
+
+    fn set_style(&mut self, style: Style) {
+        self.style = style;
     }
 }

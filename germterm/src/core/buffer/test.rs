@@ -5,7 +5,7 @@ use crate::{
         buffer::{Buffer, Drawer, slice::SubBuffer},
         draw::{Position, Rect},
     },
-    style::Style,
+    style::{Attributes, Style},
 };
 
 #[doc(hidden)]
@@ -62,9 +62,11 @@ pub fn cell_for_pos(pos: Position) -> Cell {
 
     Cell {
         ch: char::from(ASCII[(x1 ^ x2 ^ y1 ^ y2 ^ 47) as usize % ASCII.len()]),
-        style: Style::EMPTY
-            .set_fg(Color::new(x1, x2, y1, y2))
-            .set_bg(Color::new(x2, x1, y2, y1)),
+        style: Style::new(
+            Color::new(x1, x2, y1, y2),
+            Color::new(x2, x1, y2, y1),
+            Attributes::empty(),
+        ),
         format: CellFormat::Standard,
     }
 }
