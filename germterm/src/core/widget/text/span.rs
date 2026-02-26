@@ -1,8 +1,6 @@
 use std::borrow::Cow;
 
 use crate::{
-    cell::Cell,
-    color::Color,
     core::{
         buffer::Buffer,
         draw::Position,
@@ -83,13 +81,7 @@ impl<'a> Span<'a> {
                 written = sz.width as u32 * y as u32 + x as u32;
                 // TODO: add cell merging once cell styling is stored
                 if let Some(ch) = chars.next() {
-                    c.merge(Cell {
-                        ch,
-                        fg: self.style.fg().unwrap_or(Color::CLEAR),
-                        bg: self.style.bg().unwrap_or(Color::CLEAR),
-                        attributes: self.style.attributes(),
-                        format: c.format,
-                    });
+                    c.style.merge(self.style);
                     c.ch = ch;
                     if written >= limit {
                         break;

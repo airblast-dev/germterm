@@ -3,7 +3,7 @@ use std::io::Write;
 use crossterm::{cursor, event, execute, queue, style, terminal};
 
 use crate::{
-    core::{renderer::Renderer, DrawCall},
+    core::{DrawCall, renderer::Renderer},
     style::Attributes,
 };
 
@@ -63,25 +63,17 @@ impl<W: Write> Renderer for CrosstermRenderer<W> {
 
         for DrawCall { pos, cell } in calls {
             // Build the crossterm style from the cell's colors and attributes.
-            let fg = if cell.attributes.contains(Attributes::NO_FG_COLOR) {
-                None
-            } else {
-                Some(style::Color::Rgb {
-                    r: cell.fg.r(),
-                    g: cell.fg.g(),
-                    b: cell.fg.b(),
-                })
-            };
+            let fg = cell.style.fg().map(|fg| style::Color::Rgb {
+                r: fg.r(),
+                g: fg.g(),
+                b: fg.b(),
+            });
 
-            let bg = if cell.attributes.contains(Attributes::NO_BG_COLOR) {
-                None
-            } else {
-                Some(style::Color::Rgb {
-                    r: cell.bg.r(),
-                    g: cell.bg.g(),
-                    b: cell.bg.b(),
-                })
-            };
+            let bg = cell.style.bg().map(|bg| style::Color::Rgb {
+                r: bg.r(),
+                g: bg.g(),
+                b: bg.b(),
+            });
 
             let ct_attrs = [
                 (Attributes::BOLD, style::Attribute::Bold),
@@ -91,7 +83,7 @@ impl<W: Write> Renderer for CrosstermRenderer<W> {
             ]
             .iter()
             .fold(style::Attributes::none(), |acc, &(flag, attr)| {
-                if cell.attributes.contains(flag) {
+                if cell.style.attributes().contains(flag) {
                     acc | attr
                 } else {
                     acc

@@ -38,6 +38,16 @@ impl Default for Style {
     }
 }
 
+impl PartialEq for Style {
+    fn eq(&self, other: &Self) -> bool {
+        self.fg() == other.fg()
+            && self.bg() == other.bg()
+            && self.attributes() == other.attributes()
+    }
+}
+
+impl Eq for Style {}
+
 impl Style {
     pub const EMPTY: Self = Style {
         fg: MaybeUninit::uninit(),

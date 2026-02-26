@@ -3,7 +3,7 @@ use crate::{
         buffer::slice::SubBuffer,
         draw::{Position, Rect},
         timer::NoDelta,
-        widget::{text::span::Span, FrameContext, Widget},
+        widget::{FrameContext, Widget, text::span::Span},
     },
     style::Style,
 };
@@ -46,6 +46,8 @@ impl Widget<NoDelta> for Line<'_> {
         let mut offset = 0;
         for span in self.spans.iter_mut() {
             offset = span
+                .as_borrowed()
+                .set_style(self.style.merged(span.style()))
                 .fill_cells(
                     &mut SubBuffer::new(buf, Rect::new(Position::new(offset, 0), sz)),
                     sz.width - offset,
@@ -54,6 +56,12 @@ impl Widget<NoDelta> for Line<'_> {
             if offset >= sz.width {
                 break;
             }
+        }
+
+        for x in offset..sz.width {
+            buf.get_cell_mut(Position::new(x, 0))
+                .style
+                .merge(self.style);
         }
     }
 }
