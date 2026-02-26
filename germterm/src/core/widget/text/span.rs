@@ -10,7 +10,7 @@ use crate::{
     style::Style,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Span<'a> {
     pub(crate) content: Cow<'a, str>,
     style: Style,
