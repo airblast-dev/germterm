@@ -2,6 +2,8 @@ pub mod set;
 
 use std::marker::PhantomData;
 
+use bitflags::bitflags;
+
 use crate::core::{
     buffer::{Buffer, slice::SubBuffer},
     draw::{Position, Rect},
@@ -9,17 +11,28 @@ use crate::core::{
     widget::{FrameContext, Widget, block::set::BlockSet},
 };
 
+bitflags! {
+    pub struct BorderSides: u8 {
+        const TOP = 0b00000001;
+        const RIGHT = 0b00000010;
+        const BOTTOM = 0b00000100;
+        const LEFT = 0b00001000;
+    }
+}
+
 pub struct Block<D: TimerDelta, W: Widget<D>, B> {
-    pub widget: W,
-    pub border_set: B,
+    widget: W,
+    set: B,
+    sides: BorderSides,
     _timer: PhantomData<D>,
 }
 
 impl<D: TimerDelta, W: Widget<D>, B> Block<D, W, B> {
-    pub fn new(widget: W, border_set: B) -> Self {
+    pub fn new(widget: W, set: B) -> Self {
         Self {
             widget,
-            border_set,
+            set,
+            sides: BorderSides::all(),
             _timer: PhantomData,
         }
     }
@@ -28,7 +41,7 @@ impl<D: TimerDelta, W: Widget<D>, B> Block<D, W, B> {
 impl<D: TimerDelta, W: Widget<D>, B: BlockSet> Widget<D> for Block<D, W, B> {
     fn draw(&mut self, ctx: &mut FrameContext<'_, impl Buffer, D>) {
         let size = ctx.buffer().size();
-        if size.width == 0 || size.height == 0 {
+        if size.area() == 0 {
             return;
         }
 
@@ -36,12 +49,16 @@ impl<D: TimerDelta, W: Widget<D>, B: BlockSet> Widget<D> for Block<D, W, B> {
         let total_time = ctx.total_time;
         let buf = ctx.buffer_mut();
         let x_end = size.width.saturating_sub(1).max(1);
+        let left_offset = self.sides.contains(BorderSides::LEFT) as u16;
+        let right_offset = self.sides.contains(BorderSides::RIGHT) as u16;
+        let top_offset = self.sides.contains(BorderSides::TOP) as u16;
+        let bottom_offset = self.sides.contains(BorderSides::BOTTOM) as u16;
 
         // top left corner
-        {
+        if self.sides.contains(BorderSides::LEFT) && self.sides.contains(BorderSides::TOP) {
             let cur = buf.get_cell_mut(Position::ZERO);
             cur.ch = self
-                .border_set
+                .set
                 .top_left(&cur.ch.to_string())
                 .chars()
                 .next()
@@ -49,11 +66,11 @@ impl<D: TimerDelta, W: Widget<D>, B: BlockSet> Widget<D> for Block<D, W, B> {
         }
 
         // top side
-        if size.width > 2 {
+        if self.sides.contains(BorderSides::TOP) && size.width > 2 {
             for x in 1..x_end {
                 let cur = buf.get_cell_mut(Position { x, y: 0 });
                 cur.ch = self
-                    .border_set
+                    .set
                     .top(&cur.ch.to_string())
                     .chars()
                     .next()
@@ -62,13 +79,16 @@ impl<D: TimerDelta, W: Widget<D>, B: BlockSet> Widget<D> for Block<D, W, B> {
         }
 
         // top right corner
-        if size.width > 1 {
+        if self.sides.contains(BorderSides::RIGHT)
+            && self.sides.contains(BorderSides::TOP)
+            && size.width > 1
+        {
             let cur = buf.get_cell_mut(Position {
                 x: size.width - 1,
                 y: 0,
             });
             cur.ch = self
-                .border_set
+                .set
                 .top_right(&cur.ch.to_string())
                 .chars()
                 .next()
@@ -79,39 +99,46 @@ impl<D: TimerDelta, W: Widget<D>, B: BlockSet> Widget<D> for Block<D, W, B> {
         if size.height > 2 {
             let h_end = size.height.saturating_sub(1).max(1);
             // Left side
-            for y in 1..h_end {
-                let cur = buf.get_cell_mut(Position { x: 0, y });
-                cur.ch = self
-                    .border_set
-                    .left(&cur.ch.to_string())
-                    .chars()
-                    .next()
-                    .unwrap_or_default();
+            if self.sides.contains(BorderSides::LEFT) {
+                for y in 1..h_end {
+                    let cur = buf.get_cell_mut(Position { x: 0, y });
+                    cur.ch = self
+                        .set
+                        .left(&cur.ch.to_string())
+                        .chars()
+                        .next()
+                        .unwrap_or_default();
+                }
             }
 
             // Right side
-            for y in 1..h_end {
-                let cur = buf.get_cell_mut(Position {
-                    x: size.width - 1,
-                    y,
-                });
-                cur.ch = self
-                    .border_set
-                    .right(&cur.ch.to_string())
-                    .chars()
-                    .next()
-                    .unwrap_or_default();
+            if self.sides.contains(BorderSides::RIGHT) {
+                for y in 1..h_end {
+                    let cur = buf.get_cell_mut(Position {
+                        x: size.width - 1,
+                        y,
+                    });
+                    cur.ch = self
+                        .set
+                        .right(&cur.ch.to_string())
+                        .chars()
+                        .next()
+                        .unwrap_or_default();
+                }
             }
         }
 
         // bottom left
-        if size.height > 1 {
+        if self.sides.contains(BorderSides::BOTTOM)
+            && self.sides.contains(BorderSides::LEFT)
+            && size.height > 1
+        {
             let cur = buf.get_cell_mut(Position {
                 x: 0,
                 y: size.height - 1,
             });
             cur.ch = self
-                .border_set
+                .set
                 .bottom_left(&cur.ch.to_string())
                 .chars()
                 .next()
@@ -119,12 +146,12 @@ impl<D: TimerDelta, W: Widget<D>, B: BlockSet> Widget<D> for Block<D, W, B> {
         }
 
         // bottom
-        if size.width > 2 {
+        if self.sides.contains(BorderSides::BOTTOM) && size.width > 2 {
             let y = size.height - 1;
             for x in 1..x_end {
                 let cur = buf.get_cell_mut(Position { x, y });
                 cur.ch = self
-                    .border_set
+                    .set
                     .bottom(&cur.ch.to_string())
                     .chars()
                     .next()
@@ -133,13 +160,16 @@ impl<D: TimerDelta, W: Widget<D>, B: BlockSet> Widget<D> for Block<D, W, B> {
         }
 
         // bottom right
-        if size.width > 1 {
+        if self.sides.contains(BorderSides::BOTTOM)
+            && self.sides.contains(BorderSides::RIGHT)
+            && size.width > 1
+        {
             let cur = buf.get_cell_mut(Position {
                 x: size.width - 1,
                 y: size.height - 1,
             });
             cur.ch = self
-                .border_set
+                .set
                 .bottom_right(&cur.ch.to_string())
                 .chars()
                 .next()
@@ -152,7 +182,12 @@ impl<D: TimerDelta, W: Widget<D>, B: BlockSet> Widget<D> for Block<D, W, B> {
                 delta,
                 buffer: &mut SubBuffer::new(
                     buf,
-                    Rect::from_xywh(1, 1, size.width - 2, size.height - 2),
+                    Rect::from_xywh(
+                        left_offset,
+                        top_offset,
+                        size.width - (left_offset + right_offset),
+                        size.height - (top_offset + bottom_offset),
+                    ),
                 ),
             });
         }
@@ -226,4 +261,6 @@ mod tests {
 
         assert!(drawn.get());
     }
+
+    // TODO: add more tests
 }
