@@ -57,8 +57,19 @@ impl Style {
         ),
     };
 
+    pub fn new(
+        fg: impl Into<Option<Color>>,
+        bg: impl Into<Option<Color>>,
+        attributes: Attributes,
+    ) -> Self {
+        Self::EMPTY
+            .with_fg(fg)
+            .with_bg(bg)
+            .set_attributes(attributes)
+    }
+
     #[inline]
-    pub fn set_fg(mut self, fg: impl Into<Option<Color>>) -> Self {
+    pub fn with_fg(mut self, fg: impl Into<Option<Color>>) -> Self {
         let c: Option<Color> = fg.into();
         if let Some(c) = c {
             self.fg.write(c);
@@ -80,7 +91,7 @@ impl Style {
     }
 
     #[inline]
-    pub fn set_bg(mut self, bg: impl Into<Option<Color>>) -> Self {
+    pub fn with_bg(mut self, bg: impl Into<Option<Color>>) -> Self {
         let c: Option<Color> = bg.into();
         if let Some(c) = c {
             self.bg.write(c);
@@ -111,24 +122,118 @@ impl Style {
 
     #[inline]
     pub fn set_attributes(mut self, attributes: Attributes) -> Self {
-        // We don't need to actually mask the bits for safety but it can be a bit confusing if
-        // theres a bug in user code that sets no fg/bg bits.
-        self.attributes = attributes & Attributes::KNOWN;
+        // Only replace the user-visible attribute bits; preserve the internal
+        let color_bits = self.attributes & !Attributes::KNOWN;
+        self.attributes = (attributes & Attributes::KNOWN) | color_bits;
         self
     }
 
     pub fn merged(self, other: Self) -> Self {
         Self::EMPTY
-            .set_fg(other.fg().or(self.fg()))
-            .set_bg(other.bg().or(self.bg()))
+            .with_fg(other.fg().or(self.fg()))
+            .with_bg(other.bg().or(self.bg()))
             .set_attributes(other.attributes() | self.attributes())
     }
 
     pub fn merge(&mut self, other: Self) {
         *self = Self::EMPTY
-            .set_fg(other.fg().or(self.fg()))
-            .set_bg(other.bg().or(self.bg()))
+            .with_fg(other.fg().or(self.fg()))
+            .with_bg(other.bg().or(self.bg()))
             .set_attributes(other.attributes() | self.attributes());
+    }
+}
+
+// Under here are various convenience functions and macros to reduce duplication in Styleable
+//
+//
+//
+#[inline(always)]
+fn keep_if(attr: Attributes, cond: bool) -> Attributes {
+    Attributes::from_bits_retain(attr.bits() * cond as u8)
+}
+macro_rules! attr_get_set_with {
+    ($name:ident, $set_name:ident, $with_name:ident, $attr_val:expr) => {
+        #[inline]
+        fn $name(&self) -> bool {
+            self.attributes().contains($attr_val)
+        }
+        #[inline]
+        fn $set_name(&mut self, $name: bool) {
+            self.set_attributes(self.attributes() | keep_if($attr_val, $name));
+        }
+        #[inline]
+        fn $with_name(mut self, $name: bool) -> Self {
+            self.$set_name($name);
+            self
+        }
+    };
+}
+macro_rules! color_get_set_with {
+    ($name:ident, $set_name:ident, $with_name:ident) => {
+        #[inline]
+        fn $name(&self) -> Option<Color> {
+            self.style().$name()
+        }
+        #[inline]
+        fn $set_name(&mut self, $name: impl Into<Option<Color>>) {
+            self.set_style(self.style().$with_name(($name).into()));
+        }
+        #[inline]
+        fn $with_name(mut self, $name: impl Into<Option<Color>>) -> Self {
+            self.$set_name($name);
+            self
+        }
+    };
+}
+pub trait Stylable: Sized {
+    color_get_set_with!(fg, set_fg, with_fg);
+    color_get_set_with!(bg, set_bg, with_bg);
+
+    #[inline]
+    fn attributes(&self) -> Attributes {
+        self.style().attributes()
+    }
+    #[inline]
+    fn set_attributes(&mut self, attributes: Attributes) {
+        let style = self.style();
+        self.set_style(style.set_attributes(attributes));
+    }
+    #[inline]
+    fn with_attributes(mut self, attributes: Attributes) -> Self {
+        self.set_attributes(attributes);
+        self
+    }
+
+    attr_get_set_with!(bold, set_bold, with_bold, Attributes::BOLD);
+    attr_get_set_with!(italic, set_italic, with_italic, Attributes::ITALIC);
+    attr_get_set_with!(
+        underlined,
+        set_underlined,
+        with_underlined,
+        Attributes::UNDERLINED
+    );
+    attr_get_set_with!(hidden, set_hidden, with_hidden, Attributes::HIDDEN);
+
+    #[inline]
+    fn colors(&self) -> (Option<Color>, Option<Color>) {
+        (self.fg(), self.bg())
+    }
+    #[inline]
+    fn set_colors(&mut self, fg: impl Into<Option<Color>>, bg: impl Into<Option<Color>>) {
+        self.set_fg(fg);
+        self.set_bg(bg);
+    }
+    #[inline]
+    fn with_colors(self, fg: impl Into<Option<Color>>, bg: impl Into<Option<Color>>) -> Self {
+        self.with_fg(fg).with_bg(bg)
+    }
+
+    fn style(&self) -> Style;
+    fn set_style(&mut self, style: Style);
+    #[inline]
+    fn with_style(mut self, style: Style) -> Self {
+        self.set_style(style);
+        self
     }
 }
 
@@ -162,34 +267,34 @@ mod tests {
 
     #[test]
     fn set_fg_with_color_enables_fg() {
-        let style = Style::default().set_fg(Color::RED);
+        let style = Style::default().with_fg(Color::RED);
         assert!(style.has_fg());
         assert_eq!(style.fg(), Some(Color::RED));
     }
 
     #[test]
     fn set_fg_with_some_color_enables_fg() {
-        let style = Style::default().set_fg(Some(Color::BLUE));
+        let style = Style::default().with_fg(Some(Color::BLUE));
         assert!(style.has_fg());
         assert_eq!(style.fg(), Some(Color::BLUE));
     }
 
     #[test]
     fn set_fg_with_none_clears_fg() {
-        let style = Style::default().set_fg(Color::RED).set_fg(None);
+        let style = Style::default().with_fg(Color::RED).with_fg(None);
         assert!(!style.has_fg());
         assert!(style.fg().is_none());
     }
 
     #[test]
     fn set_fg_overwrites_previous_color() {
-        let style = Style::default().set_fg(Color::RED).set_fg(Color::GREEN);
+        let style = Style::default().with_fg(Color::RED).with_fg(Color::GREEN);
         assert_eq!(style.fg(), Some(Color::GREEN));
     }
 
     #[test]
     fn set_fg_does_not_affect_bg() {
-        let style = Style::default().set_fg(Color::RED);
+        let style = Style::default().with_fg(Color::RED);
         assert!(!style.has_bg());
         assert!(style.bg().is_none());
     }
@@ -198,34 +303,34 @@ mod tests {
 
     #[test]
     fn set_bg_with_color_enables_bg() {
-        let style = Style::default().set_bg(Color::WHITE);
+        let style = Style::default().with_bg(Color::WHITE);
         assert!(style.has_bg());
         assert_eq!(style.bg(), Some(Color::WHITE));
     }
 
     #[test]
     fn set_bg_with_some_color_enables_bg() {
-        let style = Style::default().set_bg(Some(Color::BLACK));
+        let style = Style::default().with_bg(Some(Color::BLACK));
         assert!(style.has_bg());
         assert_eq!(style.bg(), Some(Color::BLACK));
     }
 
     #[test]
     fn set_bg_with_none_clears_bg() {
-        let style = Style::default().set_bg(Color::WHITE).set_bg(None);
+        let style = Style::default().with_bg(Color::WHITE).with_bg(None);
         assert!(!style.has_bg());
         assert!(style.bg().is_none());
     }
 
     #[test]
     fn set_bg_overwrites_previous_color() {
-        let style = Style::default().set_bg(Color::WHITE).set_bg(Color::TEAL);
+        let style = Style::default().with_bg(Color::WHITE).with_bg(Color::TEAL);
         assert_eq!(style.bg(), Some(Color::TEAL));
     }
 
     #[test]
     fn set_bg_does_not_affect_fg() {
-        let style = Style::default().set_bg(Color::WHITE);
+        let style = Style::default().with_bg(Color::WHITE);
         assert!(!style.has_fg());
         assert!(style.fg().is_none());
     }
@@ -277,8 +382,8 @@ mod tests {
     fn attributes_does_not_expose_internal_color_bits() {
         // Even after setting fg/bg, attributes() must only return KNOWN bits.
         let style = Style::default()
-            .set_fg(Color::RED)
-            .set_bg(Color::BLUE)
+            .with_fg(Color::RED)
+            .with_bg(Color::BLUE)
             .set_attributes(Attributes::BOLD);
         let attrs = style.attributes();
         assert!(!attrs.contains(Attributes::NO_FG_COLOR));
@@ -291,8 +396,8 @@ mod tests {
     #[test]
     fn builder_chain_fg_bg_and_attributes() {
         let style = Style::default()
-            .set_fg(Color::CYAN)
-            .set_bg(Color::DARK_GRAY)
+            .with_fg(Color::CYAN)
+            .with_bg(Color::DARK_GRAY)
             .set_attributes(Attributes::BOLD | Attributes::UNDERLINED);
 
         assert_eq!(style.fg(), Some(Color::CYAN));

@@ -3,6 +3,7 @@ use std::io::Write;
 use crossterm::{cursor, event, execute, queue, style, terminal};
 
 use crate::{
+    color::Color,
     core::{DrawCall, renderer::Renderer},
     style::Attributes,
 };
@@ -62,18 +63,16 @@ impl<W: Write> Renderer for CrosstermRenderer<W> {
         let mut last_style: Option<style::ContentStyle> = None;
 
         for DrawCall { pos, cell } in calls {
+            fn conv(c: Color) -> style::Color {
+                style::Color::Rgb {
+                    r: c.r(),
+                    g: c.g(),
+                    b: c.b(),
+                }
+            }
             // Build the crossterm style from the cell's colors and attributes.
-            let fg = cell.style.fg().map(|fg| style::Color::Rgb {
-                r: fg.r(),
-                g: fg.g(),
-                b: fg.b(),
-            });
-
-            let bg = cell.style.bg().map(|bg| style::Color::Rgb {
-                r: bg.r(),
-                g: bg.g(),
-                b: bg.b(),
-            });
+            let fg = cell.style.fg().map(conv);
+            let bg = cell.style.bg().map(conv);
 
             let ct_attrs = [
                 (Attributes::BOLD, style::Attribute::Bold),

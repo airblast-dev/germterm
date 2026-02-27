@@ -2,10 +2,10 @@ use crate::{
     cell::{Cell, CellFormat},
     color::Color,
     core::{
-        buffer::{slice::SubBuffer, Buffer, Drawer},
+        buffer::{Buffer, Drawer, slice::SubBuffer},
         draw::{Position, Rect},
     },
-    style::Style,
+    style::{Attributes, Style},
 };
 
 #[doc(hidden)]
@@ -62,9 +62,11 @@ pub fn cell_for_pos(pos: Position) -> Cell {
 
     Cell {
         ch: char::from(ASCII[(x1 ^ x2 ^ y1 ^ y2 ^ 47) as usize % ASCII.len()]),
-        style: Style::EMPTY
-            .set_fg(Color::new(x1, x2, y1, y2))
-            .set_bg(Color::new(x2, x1, y2, y1)),
+        style: Style::new(
+            Color::new(x1, x2, y1, y2),
+            Color::new(x2, x1, y2, y1),
+            Attributes::empty(),
+        ),
         format: CellFormat::Standard,
     }
 }
@@ -384,9 +386,9 @@ macro_rules! drawer_buffer_tests {
             use $crate::{
                 core::buffer::test::{cell_for_pos, draw_sorted},
                 core::{
+                    Cell,
                     buffer::Buffer,
                     draw::{Position, Size},
-                    Cell,
                 },
             };
 
@@ -438,7 +440,7 @@ macro_rules! drawer_buffer_tests {
                 let mut buf = new_buf(size);
                 buf.fill(cell_for_pos(Position::ZERO));
                 let _ = draw_sorted(&mut buf); // first draw
-                                               // Nothing written to the buffer between draws.
+                // Nothing written to the buffer between draws.
                 let calls = draw_sorted(&mut buf);
                 assert_eq!(
                     calls.len(),
@@ -502,8 +504,8 @@ macro_rules! drawer_diffed_buffer_tests {
                 cell::Cell,
                 core::{
                     buffer::{
-                        test::{cell_for_pos, draw_sorted},
                         Buffer,
+                        test::{cell_for_pos, draw_sorted},
                     },
                     draw::{Position, Size},
                 },
