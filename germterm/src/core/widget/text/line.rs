@@ -12,11 +12,6 @@ use crate::{
 ///
 /// Each span carries its own [`Style`], so a single `Line` can display
 /// multiple colors, backgrounds, and text attributes on one row.
-///
-/// # Lifetimes
-///
-/// * `'s` — the borrow of the span slice.
-/// * `'c` — the lifetime of the text content inside each [`Span`].
 #[derive(Debug)]
 pub struct Line<'s, Spans: ?Sized = [Span<'s>]> {
     spans: &'s mut Spans,
