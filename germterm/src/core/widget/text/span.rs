@@ -6,7 +6,7 @@ use crate::{
         buffer::Buffer,
         draw::Position,
         timer::NoDelta,
-        widget::{FrameContext, SimpleWidget, Widget, text::LineWidth},
+        widget::{FrameContext, SimpleWidget, text::LineWidth},
     },
     style::{Stylable, Style},
 };
@@ -52,6 +52,10 @@ macro_rules! span {
     }};
 }
 
+/// A styled text segment that renders a single run of characters.
+///
+/// Must not contain ASCII control characters. Use the [`span!`] macro for
+/// compile-time validated construction.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Span<'a> {
     pub(crate) content: Cow<'a, str>,
@@ -65,12 +69,16 @@ impl<'a> LineWidth for Span<'a> {
     }
 }
 
+/// Errors returned when constructing a `Span` with invalid content.
 #[derive(Clone, Copy, Debug, Hash)]
 pub enum SpanError {
+    /// The content contains an ASCII control character at byte offset `at`.
     ControlCharacter { at: usize },
 }
 
 impl<'a> Span<'a> {
+    /// Creates a new `Span`, escaping any ASCII control characters (newlines, tabs, etc.) in the content.
+    // TODO: implement escaping instead of rejecting control characters
     pub fn new(content: impl Into<Cow<'a, str>>) -> Result<Self, SpanError> {
         let content: Cow<'a, str> = content.into();
         let s = &*content;
@@ -88,6 +96,7 @@ impl<'a> Span<'a> {
         })
     }
 
+    /// Creates a new `Span` without validating the content.
     pub const fn new_unchecked(content: &'a str) -> Self {
         let content = Cow::Borrowed(content);
         Self {
@@ -96,11 +105,13 @@ impl<'a> Span<'a> {
         }
     }
 
+    /// Replaces the span's text content, returning the modified span.
     pub fn set_content(mut self, content: impl Into<Cow<'a, str>>) -> Self {
         self.content = content.into();
         self
     }
 
+    /// Returns the text content of this span.
     pub fn content(&self) -> &str {
         &self.content
     }
@@ -110,6 +121,7 @@ impl<'a> Span<'a> {
     /// This is mainly intended to be called from other [`Widget`]'s where they would account for
     /// line wrapping themselves. In other words this is a primitive text drawer in widget form.
     pub fn fill_cells<Buf: Buffer>(&self, buf: &mut Buf, limit: u16) -> u16 {
+        // TODO: use proper cell length checks here (should get passed a `&DisplayWidth` as arg)
         let limit = limit as u32;
         let sz = buf.size();
         let mut chars = self.content.chars();
@@ -134,6 +146,7 @@ impl<'a> Span<'a> {
         written as u16
     }
 
+    /// Returns a borrowed copy of this span that references the same underlying string.
     pub fn as_borrowed<'s: 'a>(&'s self) -> Span<'s> {
         Self {
             content: Cow::Borrowed(self.content.as_ref()),
