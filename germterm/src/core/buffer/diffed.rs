@@ -99,6 +99,10 @@ impl<Buf: Buffer> Buffer for DiffedBuffers<Buf> {
         self.cells[idx].end_frame();
         self.swap_frames();
     }
+
+    fn flush(&mut self) {
+        self.cells[self.frame_order as usize].flush();
+    }
 }
 
 impl<Buf: ResizableBuffer> ResizableBuffer for DiffedBuffers<Buf> {

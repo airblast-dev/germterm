@@ -24,10 +24,32 @@ pub enum ErrorOutOfBoundsAxises {
 
 /// A 2D grid of [`Cell`]s that can be read and written by position.
 ///
-/// Implementors manage their own internal storage of [`Cell`]'s.
-/// Implementations must provide the checked variants of read/write methods
-/// which return an error if the given position falls outside the buffer's
-/// bounds. The unchecked variants must panic when a given position is out of bounds.
+/// Implementors manage their own internal storage of [`Cell`]s. This trait
+/// provides a unified way for widgets to write and read from a [`Buffer`].
+///
+/// # Checked vs unchecked methods
+///
+/// This trait provides two variants of read/write methods:
+/// - **Checked** methods (`*_checked`) return a [`Result`] that indicates whether
+///   the position was in bounds. Use these when the position may be invalid.
+/// - **Unchecked** methods panic if the position is out of bounds. Use these
+///   when you are certain the position is valid, such as when iterating over
+///   [`Buffer::size`].
+///
+/// # Frame lifecycle
+///
+/// Buffers are typically used in a frame-based rendering cycle:
+/// 1. [`start_frame`] is called at the beginning of a frame to prepare the buffer
+/// 2. Widgets write cells to the buffer
+/// 3. [`end_frame`] is called to finalize the frame
+///
+/// The default implementations of [`end_frame`] calls [`Buffer::flush`] and for [`start_frame`] it clears the
+/// buffer via [`Buffer::clear`].
+///
+/// For buffers that support resizing, see [`ResizableBuffer`].
+///
+/// [`start_frame`]: Buffer::start_frame
+/// [`end_frame`]: Buffer::end_frame
 pub trait Buffer {
     /// The size of the area that can be drawn in this buffer
     fn size(&self) -> Size;
@@ -91,19 +113,46 @@ pub trait Buffer {
         self.fill(Cell::EMPTY);
     }
 
-    /// Called at the beginning of a frame. Implementations may use this to
-    /// clear or prepare the buffer for new draw commands.
-    fn start_frame(&mut self) {}
-    /// Called at the end of a frame. Implementations may use this to
-    /// flush or finalise the buffer contents.
-    fn end_frame(&mut self) {}
+    /// Called at the beginning of a frame.
+    ///
+    /// Implementations may override this to prepare the buffer for new draw
+    /// commands. The default implementation clears the cells.
+    fn start_frame(&mut self) {
+        self.clear();
+    }
+
+    /// Called at the end of a frame.
+    ///
+    /// Implementations may override this to finalize the buffer contents before
+    /// rendering. The default implementation calls [`flush`](Buffer::flush).
+    fn end_frame(&mut self) {
+        self.flush();
+    }
+
+    /// Flushes any pending state.
+    ///
+    /// This is called by the default [`end_frame`](Buffer::end_frame)
+    /// implementation. Override this if your buffer needs to perform cleanup
+    /// or synchronization at the end of a frame.
+    ///
+    /// If calling widget with a manually created temporary buffer, this method should be called before
+    /// reading from it.
+    fn flush(&mut self) {}
 }
 
+/// A [`Buffer`] that can be resized at runtime.
+///
+/// This trait extends [`Buffer`] with the ability to change dimensions.
+/// After calling [`resize`], the buffer's [`Buffer::size`] method must
+/// return the new size.
+///
+/// [`resize`]: ResizableBuffer::resize
 pub trait ResizableBuffer: Buffer {
     /// Resizes this buffer to `size`.
     ///
-    /// After performing a resize the [`Size`] provided here must be returned from
-    /// [`Buffer::size`]. Not doing so may result in incorrect values or panics.
+    /// After this call, [`Buffer::size`] must return the provided size.
+    /// Existing cell contents may or may not be preserved depending on the
+    /// implementation.
     fn resize(&mut self, size: Size);
 }
 

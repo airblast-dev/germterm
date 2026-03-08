@@ -71,10 +71,6 @@ impl Buffer for FlatBuffer {
     fn fill(&mut self, cell: Cell) {
         self.cells.fill(cell);
     }
-
-    fn start_frame(&mut self) {
-        self.clear();
-    }
 }
 
 impl Drawer for FlatBuffer {

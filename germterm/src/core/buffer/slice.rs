@@ -206,6 +206,11 @@ impl<Buf: Buffer + ?Sized> Buffer for SubBuffer<'_, Buf> {
         };
         self.inner.get_cell_mut_checked(translated)
     }
+
+    // These are empty because a sub buffer is purely borrowed. Frames should never start or end
+    // with it.
+    fn start_frame(&mut self) {}
+    fn end_frame(&mut self) {}
 }
 
 // This section is kind of hacky.
