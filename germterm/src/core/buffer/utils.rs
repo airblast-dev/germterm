@@ -11,9 +11,7 @@ pub fn dump_buffer(buffer: &dyn Buffer, writer: &mut dyn Write) -> std::io::Resu
     for y in 0..size.height {
         for x in 0..size.width {
             let cell = buffer.get_cell(Position::new(x, y));
-            let mut buf = [0u8; 4];
-            let s = cell.ch.encode_utf8(&mut buf);
-            writer.write_all(s.as_bytes())?;
+            writer.write_all(cell.as_str().as_bytes())?;
         }
         if y < size.height - 1 {
             writer.write_all(b"\n")?;

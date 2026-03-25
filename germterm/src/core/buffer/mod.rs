@@ -77,18 +77,18 @@ pub trait Buffer {
     }
 
     /// Fills the entire buffer with `cell`.
-    fn fill(&mut self, cell: Cell) {
+    fn fill(&mut self, cell: &Cell) {
         let size = self.size();
         for y in 0..size.height {
             for x in 0..size.width {
-                self.set_cell(Position { x, y }, cell);
+                self.get_cell_mut(Position { x, y }).clone_from(&cell);
             }
         }
     }
 
     /// Clears the buffer by filling it with [`Cell::EMPTY`].
     fn clear(&mut self) {
-        self.fill(Cell::EMPTY);
+        self.fill(&Cell::EMPTY);
     }
 
     /// Called at the beginning of a frame. Implementations may use this to

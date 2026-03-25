@@ -19,7 +19,7 @@ pub fn draw_string<Buf: Buffer>(buf: &mut Buf, start: Position, s: &str) -> u16 
     // Write until we run out of characters or we are at the end of the buffer.
     for (x, ch) in (start.x..sz.width).zip(s.chars()) {
         written += 1;
-        buf.get_cell_mut(Position { x, ..start }).ch = ch;
+        todo!()
     }
 
     written

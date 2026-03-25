@@ -112,10 +112,10 @@ impl Buffer for PairedBuffer {
         Ok(&mut self.frames[pos.to_index(self.size.width)][cur])
     }
 
-    fn fill(&mut self, cell: Cell) {
+    fn fill(&mut self, cell: &Cell) {
         let cur = self.index_current();
         for frame in &mut self.frames {
-            frame[cur] = cell;
+            frame[cur].clone_from(&cell);
         }
     }
 

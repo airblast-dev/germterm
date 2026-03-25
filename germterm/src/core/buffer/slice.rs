@@ -214,6 +214,14 @@ impl<Buf: Buffer + ?Sized> Buffer for SubBuffer<'_, Buf> {
 // type a bit of unsafe to reduce duplication.
 #[cfg(test)]
 mod tests {
+    use std::{
+        cell::LazyCell,
+        ops::Deref,
+        sync::{LazyLock, OnceLock},
+    };
+
+    use sinstr::sinstr_literal;
+
     use crate::{
         buffer_tests,
         cell::Cell,
@@ -221,13 +229,12 @@ mod tests {
             buffer::{Buffer, paired::PairedBuffer, slice::SubBuffer},
             draw::{Position, Rect, Size},
         },
+        style::Style,
     };
 
     pub const SCALE: u16 = 2;
-    pub const TEST_CELL: Cell = Cell {
-        ch: '森',
-        ..Cell::EMPTY
-    };
+
+    pub static TEST_CELL: LazyLock<Cell> = LazyLock::new(|| Cell::new("森", Style::EMPTY));
 
     struct OwnedSubBuffer(SubBuffer<'static, PairedBuffer>);
 
@@ -235,7 +242,7 @@ mod tests {
         fn new(sz: Size) -> Self {
             let nsz = sz.scale(SCALE);
             let inner = Box::leak(Box::new(PairedBuffer::new(nsz)));
-            inner.fill(TEST_CELL);
+            inner.fill(&TEST_CELL);
 
             SubBuffer::new(inner, Rect::new(Position::ZERO, sz)).clear();
             OwnedSubBuffer(SubBuffer::new(inner, Rect::new(Position::ZERO, sz)))
@@ -258,7 +265,7 @@ mod tests {
                     let pos = Position::new(x, y);
                     assert_eq!(
                         inner.get_cell(pos),
-                        &TEST_CELL,
+                        TEST_CELL.deref(),
                         "Mismatch of cell in {pos:?}"
                     );
                 }
@@ -270,7 +277,7 @@ mod tests {
                     let pos = Position::new(x, y);
                     assert_eq!(
                         inner.get_cell(pos),
-                        &TEST_CELL,
+                        TEST_CELL.deref(),
                         "Mismatch of cell in {pos:?}"
                     );
                 }
@@ -282,7 +289,7 @@ mod tests {
                     let pos = Position::new(x, y);
                     assert_eq!(
                         inner.get_cell(pos),
-                        &TEST_CELL,
+                        TEST_CELL.deref(),
                         "Mismatch of cell in {pos:?}"
                     );
                 }
@@ -309,12 +316,12 @@ mod tests {
                 .expect("out of bounds get_cell_mut")
         }
 
-        fn fill(&mut self, cell: crate::cell::Cell) {
+        fn fill(&mut self, cell: &crate::cell::Cell) {
             self.0.fill(cell);
         }
 
         fn clear(&mut self) {
-            self.0.fill(crate::cell::Cell::EMPTY);
+            self.0.fill(&crate::cell::Cell::EMPTY);
         }
 
         fn start_frame(&mut self) {

@@ -1,5 +1,5 @@
 use crate::{
-    cell::{Cell, CellFormat},
+    cell::Cell,
     color::Color,
     core::{
         buffer::{Buffer, Drawer, slice::SubBuffer},
@@ -50,34 +50,32 @@ pub fn cell_for_pos(pos: Position) -> Cell {
     let [x1, x2] = pos.x.to_be_bytes();
     let [y1, y2] = pos.y.to_be_bytes();
 
-    const ASCII_LOWER: [u8; 26] = [
-        b'a', b'b', b'c', b'd', b'e', b'f', b'g', b'h', b'i', b'j', b'k', b'l', b'm', b'n', b'o',
-        b'p', b'q', b'r', b's', b't', b'u', b'v', b'w', b'x', b'y', b'z',
+    const ASCII_LOWER: [&str; 26] = [
+        "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r",
+        "s", "t", "u", "v", "w", "x", "y", "z",
     ];
-    const ASCII_UPPER: [u8; 26] = [
-        b'A', b'B', b'C', b'D', b'E', b'F', b'G', b'H', b'I', b'J', b'K', b'L', b'M', b'N', b'O',
-        b'P', b'Q', b'R', b'S', b'T', b'U', b'V', b'W', b'X', b'Y', b'Z',
+    const ASCII_UPPER: [&str; 26] = [
+        "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R",
+        "S", "T", "U", "V", "W", "X", "Y", "Z",
     ];
-    const ASCII: &[u8] = [ASCII_LOWER, ASCII_UPPER].as_flattened();
+    const ASCII: &[&str] = [ASCII_LOWER, ASCII_UPPER].as_flattened();
 
-    Cell {
-        ch: char::from(ASCII[(x1 ^ x2 ^ y1 ^ y2 ^ 47) as usize % ASCII.len()]),
-        style: Style::new(
-            Color::new(x1, x2, y1, y2),
-            Color::new(x2, x1, y2, y1),
-            Attributes::empty(),
-        ),
-        format: CellFormat::Standard,
-    }
+    let s = ASCII[(x1 ^ x2 ^ y1 ^ y2 ^ 47) as usize % ASCII.len()];
+    let style = Style::new(
+        Color::new(x1, x2, y1, y2),
+        Color::new(x2, x1, y2, y1),
+        Attributes::empty(),
+    );
+    Cell::new(s, style)
 }
 
 #[doc(hidden)]
 pub fn draw_sorted<Buf: Buffer + Drawer>(buf: &mut Buf) -> Vec<(u16, u16, Cell)> {
     let mut calls: Vec<_> = buf
         .draw()
-        .map(|dc| (dc.pos.x, dc.pos.y, *dc.cell))
+        .map(|dc| (dc.pos.x, dc.pos.y, dc.cell.clone()))
         .collect();
-    calls.sort_by(|&(_, _, c1), &(_, _, c2)| c1.ch.cmp(&c2.ch));
+    calls.sort_by(|(_, _, c1), (_, _, c2)| c1.as_str().cmp(c2.as_str()));
     buf.end_frame();
     buf.start_frame();
     calls
@@ -340,7 +338,7 @@ macro_rules! buffer_tests {
                 let size = Size::new(4, 3);
                 let mut buf = new_buf(size);
                 let fill_cell = cell_for_pos(Position::ZERO);
-                buf.fill(fill_cell.clone());
+                buf.fill(&fill_cell);
                 for y in 0..size.height {
                     for x in 0..size.width {
                         assert_eq!(
@@ -358,7 +356,7 @@ macro_rules! buffer_tests {
             fn clear_sets_every_cell_to_empty() {
                 let size = Size::new(4, 3);
                 let mut buf = new_buf(size);
-                buf.fill(cell_for_pos(Position::ZERO));
+                buf.fill(&cell_for_pos(Position::ZERO));
                 buf.clear();
                 for y in 0..size.height {
                     for x in 0..size.width {
@@ -438,7 +436,7 @@ macro_rules! drawer_buffer_tests {
             fn draw_emits_all_cells_when_unchanged() {
                 let size = Size::new(3, 2);
                 let mut buf = new_buf(size);
-                buf.fill(cell_for_pos(Position::ZERO));
+                buf.fill(&cell_for_pos(Position::ZERO));
                 let _ = draw_sorted(&mut buf); // first draw
                 // Nothing written to the buffer between draws.
                 let calls = draw_sorted(&mut buf);
@@ -462,12 +460,12 @@ macro_rules! drawer_buffer_tests {
                 let calls = draw_sorted(&mut buf);
                 let find = |x, y| calls.iter().find(|&&(cx, cy, _)| cx == x && cy == y);
                 assert_eq!(
-                    find(pos_a.x, pos_a.y).map(|&(_, _, ch)| ch),
-                    Some(cell_for_pos(pos_a))
+                    find(pos_a.x, pos_a.y).map(|(_, _, ch)| ch),
+                    Some(cell_for_pos(pos_a)).as_ref()
                 );
                 assert_eq!(
-                    find(pos_b.x, pos_b.y).map(|&(_, _, ch)| ch),
-                    Some(cell_for_pos(pos_b))
+                    find(pos_b.x, pos_b.y).map(|(_, _, ch)| ch),
+                    Some(cell_for_pos(pos_b)).as_ref()
                 );
             }
 
@@ -619,9 +617,9 @@ macro_rules! drawer_diffed_buffer_tests {
                 buf.set_cell(pos_a, cell_for_pos(pos_b));
                 let calls = draw_sorted(&mut buf);
                 assert!(
-                    calls.iter().any(|&(x, y, ch)| x == pos_a.x
-                        && y == pos_a.y
-                        && ch == cell_for_pos(pos_b)),
+                    calls.iter().any(|(x, y, ch)| *x == pos_a.x
+                        && *y == pos_a.y
+                        && ch.clone() == cell_for_pos(pos_b)),
                     "overwritten cell must be emitted with its new value"
                 );
             }
@@ -658,10 +656,10 @@ macro_rules! drawer_diffed_buffer_tests {
                 // start_frame cleared the current frame; old frame is EMPTY.
                 // Write fill_cell and draw so old frame becomes fill_cell everywhere.
                 let fill_cell = cell_for_pos(Position::ZERO);
-                buf.fill(fill_cell.clone());
+                buf.fill(&fill_cell);
                 let _ = draw_sorted(&mut buf);
                 // start_frame cleared current frame; write fill_cell again to match old.
-                buf.fill(fill_cell);
+                buf.fill(&fill_cell);
                 assert_eq!(
                     draw_sorted(&mut buf).len(),
                     0,
@@ -677,7 +675,7 @@ macro_rules! drawer_diffed_buffer_tests {
                 let mut buf = new_buf(size);
                 let _ = draw_sorted(&mut buf); // old frame = EMPTY, current = fresh blank
 
-                buf.fill(cell_for_pos(Position::ZERO));
+                buf.fill(&cell_for_pos(Position::ZERO));
                 let calls = draw_sorted(&mut buf);
                 assert_eq!(
                     calls.len(),

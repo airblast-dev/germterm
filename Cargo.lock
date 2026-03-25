@@ -314,6 +314,7 @@ dependencies = [
  "criterion",
  "crossterm 0.29.0",
  "rand",
+ "sinstr",
  "termbg",
  "unicode-width",
 ]
@@ -887,6 +888,12 @@ dependencies = [
  "termcolor",
  "time",
 ]
+
+[[package]]
+name = "sinstr"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7c383ea82ae0eaeca14e3b0cb85fcae80501591b98be989a32e1d8a3f1b9265d"
 
 [[package]]
 name = "smallvec"

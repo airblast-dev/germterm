@@ -84,7 +84,7 @@ impl<Buf: Buffer> Buffer for DiffedBuffers<Buf> {
         self.cells[idx].get_cell_mut_checked(pos)
     }
 
-    fn fill(&mut self, cell: Cell) {
+    fn fill(&mut self, cell: &Cell) {
         let idx = self.frame_order as usize;
         self.cells[idx].fill(cell);
     }
